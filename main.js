@@ -1,5 +1,5 @@
 import * as THREE from './three.js-master/build/three.module.js';
-import { OBJLoader } from './three.js-master/examples/jsm/loaders/OBJLoader.js';
+import { GLTFLoader } from './three.js-master/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from './three.js-master/examples/jsm/controls/OrbitControls.js';
 import { MTLLoader } from './three.js-master/examples/jsm/loaders/MTLLoader.js';
 function onProgress(xhr) {
@@ -8,39 +8,75 @@ function onProgress(xhr) {
 function onError(error) {
 	console.log('An error happened');
 }
-function frameArea(sizeToFitOnScreen, boxSize, boxCenter, camera) {
-	const halfSizeToFitOnScreen = sizeToFitOnScreen * 0.5;
-	const halfFovY = THREE.MathUtils.degToRad(camera.fov * .5);
-	const distance = halfSizeToFitOnScreen / Math.tan(halfFovY);
-
-	const direction = (new THREE.Vector3())
-    .subVectors(camera.position, boxCenter)
-    .multiply(new THREE.Vector3(1, 0, 1))
-    .normalize();
-
-	// move the camera to a position distance units way from the center
-	// in whatever direction the camera was from the center already
-	camera.position.copy(direction.multiplyScalar(distance).add(boxCenter));
-
-	// pick some near and far values for the frustum that
-	// will contain the box.
-	camera.near = boxSize / 100;
-	camera.far = boxSize * 100;
-
-	camera.updateProjectionMatrix();
-
-	// point the camera to look at the center of the box
-	camera.lookAt(boxCenter.x, boxCenter.y, boxCenter.z);
+var modelsLoaded = false;
+const models = {
+	drone: { url: './models/drone.gltf' }
 }
+function loadModels() {
+	const modelsLoadMngr = new THREE.LoadingManager();
+	modelsLoadMngr.onLoad = () => {
+		modelsLoaded = true;
+
+		// document.querySelector('#models_loading').hidden = true;
+
+		if (modelsLoaded) {
+			main();
+		}
+	};
+	modelsLoadMngr.onProgress = (url, itemsLoaded, itemsTotal) => {
+		console.log("Loading the models... ", itemsLoaded / itemsTotal * 100, "%");
+		// document.getElementById("get_models_progress").innerHTML = `${itemsLoaded / itemsTotal * 100 | 0}%`;
+	};
+	{
+		const gltfLoader = new GLTFLoader(modelsLoadMngr);
+		for (const model of Object.values(models)) {
+			console.log("Loading Model: ", model);
+			gltfLoader.load(model.url, (gltf) => {
+				const standardMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 })
+				gltf.scene.traverse(function (child) {
+
+					if (child.isMesh) {
+						child.castShadow = true;
+						child.receiveShadow = true;
+						child.material = standardMaterial;
+					}
+
+				});
+
+				model.gltf = gltf.scene;
+			});
+		}
+	}
+}
+loadModels();
+
+var drone = {
+	mesh: null,
+	positions: {
+		left: -1,
+		ahead: 0,
+		right: 1,
+		back: 2,
+		up: 3,
+		down: 4
+	},
+	elements: {
+		propellers: {},
+	},
+	rotations: {
+
+	}
+}
+
 function main() {
 
 	let camera, scene, renderer;
-	let geometry, material, cube;
 
 	const canvas = document.querySelector('#c');
 	renderer = new THREE.WebGL1Renderer({ canvas });
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	renderer.setAnimationLoop(animation);
+	renderer.shadowMap.enabled = true
 
 
 	camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 1000);
@@ -71,6 +107,7 @@ function main() {
 		});
 		const mesh = new THREE.Mesh(planeGeo, planeMat);
 		mesh.rotation.x = Math.PI * -.5;
+		mesh.receiveShadow = true;
 		scene.add(mesh);
 	}
 
@@ -86,45 +123,57 @@ function main() {
 		const color = 0xFFFFFF;
 		const intensity = 1;
 		const light = new THREE.DirectionalLight(color, intensity);
-		light.position.set(0, 10, 0);
-		light.target.position.set(-5, 0, 0);
+		light.castShadow = true;
+		light.position.set(100, 100, 0);
+		light.target.position.set(0, 0, 0);
+		light.shadow.camera = new THREE.OrthographicCamera(-50,50,50,-50);
+		light.shadow.mapSize.width = 2048;
+		light.shadow.mapSize.height = 2048;
+		console.log(light.shadow.camera)
 		scene.add(light);
 		scene.add(light.target);
+		const cameraHelper = new THREE.CameraHelper(light.shadow.camera);
+		scene.add(cameraHelper);
 	}
 
-	{
-		const mtlLoader = new MTLLoader();
-		mtlLoader.load('./materials/windmill1.mtl', (mtl) => {
-			mtl.preload();
-			const objLoader = new OBJLoader();
-			objLoader.setMaterials(mtl);
-			objLoader.load('./models/windmill1.obj', (root) => {
-				scene.add(root);
-			});
-		});
+
+	function initDrone() {
+		drone.mesh = new THREE.Object3D();
+		drone.mesh.name = "Drone";
+
+		drone.mesh.add(models.drone.gltf.getObjectByName('body'));
+		drone.mesh.position.y = 10;
+		scene.add(drone.mesh);
+		drone.mesh.traverse(o => {
+
+			if (o.name === "PropellerFR") {
+				drone.elements.propellers.propellerFR = o;
+			}
+			if (o.name === "PropellerFL") {
+				drone.elements.propellers.propellerFL = o;
+			}
+			if (o.name === "PropellerBR") {
+				drone.elements.propellers.propellerBR = o;
+			}
+			if (o.name === "PropellerBL") {
+				drone.elements.propellers.propellerBL = o;
+			}
+		})
 	}
-	{
-		const mtlLoader = new MTLLoader();
-		mtlLoader.load('./materials/drone.mtl', (mtl) => {
-			mtl.preload();
-			const objLoader = new OBJLoader();
-			objLoader.setMaterials(mtl);
-			objLoader.load('./models/drone.obj', (root) => {
-				root.traverse((child) => {
-					console.log(child)
-				})
-				scene.add(root);
-			});
-		});
-	}
-	scene.traverse(function(obj) {
+	initDrone();
+	console.log(drone)
+	scene.traverse(function (obj) {
 
 	})
 
 	function animation(time) {
 		time *= 0.001;
+		const speed = 10;
+		const rot = time * speed;
+		drone.elements.propellers.propellerFR.rotation.y = -rot;
+		drone.elements.propellers.propellerFL.rotation.y = -rot;
+		drone.elements.propellers.propellerBR.rotation.y = -rot;
+		drone.elements.propellers.propellerBL.rotation.y = -rot;
 		renderer.render(scene, camera);
 	}
 }
-main();
-
