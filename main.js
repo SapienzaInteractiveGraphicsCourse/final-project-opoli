@@ -158,6 +158,10 @@ function main() {
 			if (o.name === "PropellerBL") {
 				drone.elements.propellers.propellerBL = o;
 			}
+
+			if (o.name === "body") {
+				drone.elements.propellers.body = o;
+			}
 		})
 	}
 	initDrone();
@@ -167,6 +171,7 @@ function main() {
 	})
 
 	function animation(time) {
+		console.log(drone.elements.propellers.body.rotation.y)
 		time *= 0.001;
 		const speed = 10;
 		const rot = time * speed;
@@ -174,6 +179,100 @@ function main() {
 		drone.elements.propellers.propellerFL.rotation.y = -rot;
 		drone.elements.propellers.propellerBR.rotation.y = -rot;
 		drone.elements.propellers.propellerBL.rotation.y = -rot;
+
+
+
+		document.addEventListener('keydown', function(event) {
+			if (event.keyCode == 69) {       // decollo tasto E
+				drone.mesh.position.y+=0.001;
+		
+			}
+		}, true);
+
+		document.addEventListener('keydown', function(event) {
+			if (event.keyCode == 82) {		// atterraggio tasto R
+				drone.mesh.position.y-=0.001;
+		
+			}
+		}, true);
+
+		document.addEventListener('keydown', function(event) {
+			if (event.keyCode == 87) {		// avanti tasto W
+				drone.mesh.position.z+=0.001;
+				if(drone.elements.propellers.body.rotation.x<=1.75){
+				drone.elements.propellers.body.rotation.x+=0.0001;
+				}
+		
+			}
+		}, true);
+
+		document.addEventListener('keyup', function(event) {
+			if (event.keyCode == 87) {		// inclinazione in avanti
+				if(drone.elements.propellers.body.rotation.x>1.57){
+				drone.elements.propellers.body.rotation.x-=0.0001;
+				}
+		
+			}
+		}, true);
+
+		document.addEventListener('keydown', function(event) {
+			if (event.keyCode == 83) {		// indietro tasto S
+				drone.mesh.position.z-=0.001;
+				if(drone.elements.propellers.body.rotation.x>=1.39){
+					drone.elements.propellers.body.rotation.x-=0.0001;
+				}
+		
+			}
+		}, true);
+
+		document.addEventListener('keyup', function(event) {
+			if (event.keyCode == 83) {		// inclinazione indietro
+				if(drone.elements.propellers.body.rotation.x<1.57){
+				drone.elements.propellers.body.rotation.x+=0.0001;
+				}
+		
+			}
+		}, true);
+
+
+		document.addEventListener('keydown', function(event) {
+			if (event.keyCode == 68) {		// destra tasto D
+				drone.mesh.position.x-=0.001;
+				if(drone.elements.propellers.body.rotation.y<=0.20){
+					drone.elements.propellers.body.rotation.y+=0.0001;
+				}
+		
+			}
+		}, true);
+
+		document.addEventListener('keyup', function(event) {
+			if (event.keyCode == 68) {		// inclinazione destra
+				if(drone.elements.propellers.body.rotation.y>=0){
+				drone.elements.propellers.body.rotation.y-=0.0001;
+				}
+		
+			}
+		}, true);
+
+		document.addEventListener('keydown', function(event) {
+			if (event.keyCode == 65) {		// sinistra tasto A
+				drone.mesh.position.x+=0.001;
+				if(drone.elements.propellers.body.rotation.y>=-0.20){
+					drone.elements.propellers.body.rotation.y-=0.0001;
+				}
+		
+			}
+		}, true);
+
+		document.addEventListener('keyup', function(event) {
+			if (event.keyCode == 65) {		// inclinazione sinistra
+				if(drone.elements.propellers.body.rotation.y<=0){
+				drone.elements.propellers.body.rotation.y+=0.0001;
+				}
+		
+			}
+		}, true);
+
 		renderer.render(scene, camera);
 	}
 }
