@@ -48,8 +48,8 @@ function loadModels() {
 		}
 	}
 }
-loadModels();
 
+window.onload = loadModels;
 var drone = {
 	mesh: null,
 	positions: {
@@ -68,27 +68,44 @@ var drone = {
 	}
 }
 
+// controls
+const inputs = {
+	w: false, // forward
+	s: false, // backwards
+	d: false, // right
+	a: false, // left
+	" ": false, // throttle up
+	"<": false, // throttle down
+	e: false, // clockwise rotation
+	q: false // counter-clockwise rotation
+}
+
 function main() {
 
+
 	let camera, scene, renderer;
+	var width = window.innerWidth;
+	var height = window.innerHeight;
 
 	const canvas = document.querySelector('#c');
 	renderer = new THREE.WebGL1Renderer({ canvas });
-	renderer.setSize(window.innerWidth, window.innerHeight);
+	renderer.setSize(width, height);
+	renderer.autoClear = false;
 	renderer.setAnimationLoop(animation);
 	renderer.shadowMap.enabled = true
 
+	// creating scene
+	scene = new THREE.Scene();
 
-	camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 1000);
-	camera.position.set(0, 10, 20);
+	camera = new THREE.PerspectiveCamera(45, width / height, 0.01, 1000);
+	camera.position.set(100, 50, 100);
+	camera.lookAt(scene.position)
 
 	const controls = new OrbitControls(camera, canvas);
 	controls.target.set(0, 5, 0);
 	controls.update();
 
-	// creating scene
-	scene = new THREE.Scene();
-
+	// plane
 	{
 		const planeSize = 400;
 
@@ -110,7 +127,7 @@ function main() {
 		mesh.receiveShadow = true;
 		scene.add(mesh);
 	}
-
+	// sky
 	{
 		const skyColor = 0xB1E1FF;  // light blue
 		const groundColor = 0xB97A20;  // brownish orange
@@ -118,7 +135,7 @@ function main() {
 		const light = new THREE.HemisphereLight(skyColor, groundColor, intensity);
 		scene.add(light);
 	}
-
+	// dirlight
 	{
 		const color = 0xFFFFFF;
 		const intensity = 1;
@@ -126,7 +143,7 @@ function main() {
 		light.castShadow = true;
 		light.position.set(100, 100, 0);
 		light.target.position.set(0, 0, 0);
-		light.shadow.camera = new THREE.OrthographicCamera(-50,50,50,-50);
+		light.shadow.camera = new THREE.OrthographicCamera(-50, 50, 50, -50);
 		light.shadow.mapSize.width = 2048;
 		light.shadow.mapSize.height = 2048;
 		console.log(light.shadow.camera)
@@ -163,116 +180,212 @@ function main() {
 				drone.elements.propellers.body = o;
 			}
 		})
+
+		// event listeners
+
 	}
 	initDrone();
+	{
+		document.addEventListener('keydown', function (event) {
+			if (event.key == "e") {       // decollo tasto E
+				drone.mesh.position.y += 0.001;
+
+			}
+		}, true);
+
+		document.addEventListener('keydown', function (event) {
+			if (event.key == "q") {		// atterraggio tasto R
+				drone.mesh.position.y -= 0.001;
+
+			}
+		}, true);
+
+		document.addEventListener('keydown', function (event) {
+			if (event.key == "w") {		// avanti tasto W
+				drone.mesh.position.z += 0.001;
+				if (drone.elements.propellers.body.rotation.x <= 1.75) {
+					drone.elements.propellers.body.rotation.x += 0.0001;
+				}
+
+			}
+		}, true);
+
+		document.addEventListener('keyup', function (event) {
+			if (event.key == "w") {		// inclinazione in avanti
+				if (drone.elements.propellers.body.rotation.x > 1.57) {
+					drone.elements.propellers.body.rotation.x -= 0.0001;
+				}
+
+			}
+		}, true);
+
+		document.addEventListener('keydown', function (event) {
+			if (event.key == "s") {		// indietro tasto S
+				drone.mesh.position.z -= 0.001;
+				if (drone.elements.propellers.body.rotation.x >= 1.39) {
+					drone.elements.propellers.body.rotation.x -= 0.0001;
+				}
+
+			}
+		}, true);
+
+		document.addEventListener('keyup', function (event) {
+			if (event.key == "s") {		// inclinazione indietro
+				if (drone.elements.propellers.body.rotation.x < 1.57) {
+					drone.elements.propellers.body.rotation.x += 0.0001;
+				}
+
+			}
+		}, true);
+
+
+		document.addEventListener('keydown', function (event) {
+			if (event.key == "d") {		// destra tasto D
+				drone.mesh.position.x -= 0.001;
+				if (drone.elements.propellers.body.rotation.y <= 0.20) {
+					drone.elements.propellers.body.rotation.y += 0.0001;
+				}
+
+			}
+		}, true);
+
+		document.addEventListener('keyup', function (event) {
+			if (event.key == "d") {		// inclinazione destra
+				if (drone.elements.propellers.body.rotation.y >= 0) {
+					drone.elements.propellers.body.rotation.y -= 0.0001;
+				}
+
+			}
+		}, true);
+
+		document.addEventListener('keydown', function (event) {
+			if (event.key == "a") {		// sinistra tasto A
+				drone.mesh.position.x += 0.001;
+				if (drone.elements.propellers.body.rotation.y >= -0.20) {
+					drone.elements.propellers.body.rotation.y -= 0.0001;
+				}
+
+			}
+		}, true);
+
+		document.addEventListener('keyup', function (event) {
+			if (event.key == "a") {		// inclinazione sinistra
+				if (drone.elements.propellers.body.rotation.y <= 0) {
+					drone.elements.propellers.body.rotation.y += 0.0001;
+				}
+
+			}
+		}, true);
+	}
 	console.log(drone)
-	scene.traverse(function (obj) {
+	{
+		document.addEventListener('keydown', function (event) {
+			inputs[event.key] = true;
+		});
 
-	})
 
+		document.addEventListener('keyup', function (event) {
+			inputs[event.key] = false;
+			// switch (event.key) {
+			// 	case "w":
+			// 		while (drone.mesh.rotation.x > 1.57) {
+			// 			drone.mesh.rotation.x -= 0.0001;
+			// 		}
+			// 		break;
+			// 	case "s":
+			// 		while (drone.mesh.rotation.x < 1.57) {
+			// 			drone.mesh.rotation.x += 0.0001;
+			// 		}
+			// 		break;
+			// 	case "d":
+			// 		while (drone.mesh.rotation.y >= 0) {
+			// 			drone.mesh.rotation.y -= 0.0001;
+			// 		}
+			// 		break;
+			// 	case "a":
+			// 		while (drone.mesh.rotation.y <= 0) {
+			// 			drone.mesh.rotation.y += 0.0001;
+			// 		}
+			// 		break;
+			// 	default:
+			// 		break;
+			// }
+		});
+
+
+
+
+
+
+
+	}
+
+	// HUD
+	{
+		var hudCanvas = document.createElement('canvas');
+		hudCanvas.width = width;
+		hudCanvas.height = height;
+
+		var hudBitmap = hudCanvas.getContext('2d');
+		hudBitmap.font = "Normal 40px Arial";
+		hudBitmap.textAlign = 'center';
+		hudBitmap.fillStyle = "rgba(255,255,255,1.0)";
+		hudBitmap.fillText('Initializing...', width / 2, height / 2);
+		var cameraHUD = new THREE.OrthographicCamera(-width / 2, width / 2, height / 2, -height / 2, 0, 30);
+
+		// Create also a custom scene for HUD.
+		var sceneHUD = new THREE.Scene();
+
+		// Create texture from rendered graphics.
+		var hudTexture = new THREE.Texture(hudCanvas)
+		hudTexture.needsUpdate = true;
+		hudTexture.minFilter = THREE.LinearFilter;
+
+		// Create HUD material.
+		var material = new THREE.MeshBasicMaterial({ map: hudTexture });
+		material.transparent = true;
+
+		// Create plane to render the HUD. This plane fill the whole screen.
+		var planeGeometry = new THREE.PlaneGeometry(width, height);
+		var plane = new THREE.Mesh(planeGeometry, material);
+		sceneHUD.add(plane);
+	}
+	var oldtime = 0;
+	var ay = 9.81;
+	var speedy = 0;
 	function animation(time) {
-		console.log(drone.elements.propellers.body.rotation.y)
 		time *= 0.001;
-		const speed = 10;
-		const rot = time * speed;
+		var dt = time - oldtime;
+		oldtime = time;
+
+		hudBitmap.clearRect(0, 0, width, height);
+		hudBitmap.fillText(Math.round(1 / dt), 50, 50)
+		hudTexture.needsUpdate = true;
+
+		const prop_speed = 10;
+		const rot = time * prop_speed;
 		drone.elements.propellers.propellerFR.rotation.y = -rot;
 		drone.elements.propellers.propellerFL.rotation.y = -rot;
 		drone.elements.propellers.propellerBR.rotation.y = -rot;
 		drone.elements.propellers.propellerBL.rotation.y = -rot;
 
-
-
-		document.addEventListener('keydown', function(event) {
-			if (event.keyCode == 69) {       // decollo tasto E
-				drone.mesh.position.y+=0.001;
+		const speed = 50;
+		const ang_speed = 1;
+		var dO = ang_speed * dt;
+		var ds = speed * dt;
+		const g = -9.81;
+		if (inputs[" "]) ay += 0.1;
+		if (inputs["<"]) ay -= 0.1;
+		if (inputs.w) drone.mesh.position.z += ds;
+		if (inputs.s) drone.mesh.position.z -= ds;
+		if (inputs.a) drone.mesh.position.x += ds;
+		if (inputs.d) drone.mesh.position.x -= ds;
+		if (inputs.e) drone.mesh.rotation.y += dO;
+		if (inputs.q) drone.mesh.rotation.y -= dO;
+		speedy += (ay+g) * dt;
+		drone.mesh.position.y += speedy * dt;
 		
-			}
-		}, true);
-
-		document.addEventListener('keydown', function(event) {
-			if (event.keyCode == 82) {		// atterraggio tasto R
-				drone.mesh.position.y-=0.001;
-		
-			}
-		}, true);
-
-		document.addEventListener('keydown', function(event) {
-			if (event.keyCode == 87) {		// avanti tasto W
-				drone.mesh.position.z+=0.001;
-				if(drone.elements.propellers.body.rotation.x<=1.75){
-				drone.elements.propellers.body.rotation.x+=0.0001;
-				}
-		
-			}
-		}, true);
-
-		document.addEventListener('keyup', function(event) {
-			if (event.keyCode == 87) {		// inclinazione in avanti
-				if(drone.elements.propellers.body.rotation.x>1.57){
-				drone.elements.propellers.body.rotation.x-=0.0001;
-				}
-		
-			}
-		}, true);
-
-		document.addEventListener('keydown', function(event) {
-			if (event.keyCode == 83) {		// indietro tasto S
-				drone.mesh.position.z-=0.001;
-				if(drone.elements.propellers.body.rotation.x>=1.39){
-					drone.elements.propellers.body.rotation.x-=0.0001;
-				}
-		
-			}
-		}, true);
-
-		document.addEventListener('keyup', function(event) {
-			if (event.keyCode == 83) {		// inclinazione indietro
-				if(drone.elements.propellers.body.rotation.x<1.57){
-				drone.elements.propellers.body.rotation.x+=0.0001;
-				}
-		
-			}
-		}, true);
-
-
-		document.addEventListener('keydown', function(event) {
-			if (event.keyCode == 68) {		// destra tasto D
-				drone.mesh.position.x-=0.001;
-				if(drone.elements.propellers.body.rotation.y<=0.20){
-					drone.elements.propellers.body.rotation.y+=0.0001;
-				}
-		
-			}
-		}, true);
-
-		document.addEventListener('keyup', function(event) {
-			if (event.keyCode == 68) {		// inclinazione destra
-				if(drone.elements.propellers.body.rotation.y>=0){
-				drone.elements.propellers.body.rotation.y-=0.0001;
-				}
-		
-			}
-		}, true);
-
-		document.addEventListener('keydown', function(event) {
-			if (event.keyCode == 65) {		// sinistra tasto A
-				drone.mesh.position.x+=0.001;
-				if(drone.elements.propellers.body.rotation.y>=-0.20){
-					drone.elements.propellers.body.rotation.y-=0.0001;
-				}
-		
-			}
-		}, true);
-
-		document.addEventListener('keyup', function(event) {
-			if (event.keyCode == 65) {		// inclinazione sinistra
-				if(drone.elements.propellers.body.rotation.y<=0){
-				drone.elements.propellers.body.rotation.y+=0.0001;
-				}
-		
-			}
-		}, true);
-
 		renderer.render(scene, camera);
+		renderer.render(sceneHUD, cameraHUD);
 	}
 }
