@@ -2,6 +2,7 @@ import * as THREE from './three.js-master/build/three.module.js';
 import { GLTFLoader } from './three.js-master/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from './three.js-master/examples/jsm/controls/OrbitControls.js';
 import { MTLLoader } from './three.js-master/examples/jsm/loaders/MTLLoader.js';
+import TWEEN, { Tween } from './tween.js/dist/tween.esm.js'
 function onProgress(xhr) {
 	console.log((xhr.loaded / xhr.total * 100) + '% loaded');
 }
@@ -79,6 +80,26 @@ const inputs = {
 	e: false, // clockwise rotation
 	q: false // counter-clockwise rotation
 }
+const inputs_queue = {
+	w: false, // forward
+	s: false, // backwards
+	d: false, // right
+	a: false, // left
+	" ": false, // throttle up
+	"<": false, // throttle down
+	e: false, // clockwise rotation
+	q: false // counter-clockwise rotation;
+}
+const exclusives = {
+	w: "s",
+	s: "w",
+	a: "d",
+	d: "a",
+	" ": "<",
+	"<": " ",
+	e: "q",
+	q: "e"
+}
 
 function main() {
 
@@ -99,10 +120,11 @@ function main() {
 
 	camera = new THREE.PerspectiveCamera(45, width / height, 0.01, 1000);
 	camera.position.set(100, 50, 100);
-	camera.lookAt(scene.position)
 
 	const controls = new OrbitControls(camera, canvas);
-	controls.target.set(0, 5, 0);
+	controls.target.set(0, 0, 0);
+	controls.minDistance = 80;
+	controls.maxDistance = 80;
 	controls.update();
 
 	// plane
@@ -186,106 +208,57 @@ function main() {
 	}
 	initDrone();
 	{
-		document.addEventListener('keydown', function (event) {
-			if (event.key == "e") {       // decollo tasto E
-				drone.mesh.position.y += 0.001;
-
-			}
-		}, true);
-
-		document.addEventListener('keydown', function (event) {
-			if (event.key == "q") {		// atterraggio tasto R
-				drone.mesh.position.y -= 0.001;
-
-			}
-		}, true);
-
-		document.addEventListener('keydown', function (event) {
-			if (event.key == "w") {		// avanti tasto W
-				drone.mesh.position.z += 0.001;
-				if (drone.elements.propellers.body.rotation.x <= 1.75) {
-					drone.elements.propellers.body.rotation.x += 0.0001;
-				}
-
-			}
-		}, true);
-
-		document.addEventListener('keyup', function (event) {
-			if (event.key == "w") {		// inclinazione in avanti
-				if (drone.elements.propellers.body.rotation.x > 1.57) {
-					drone.elements.propellers.body.rotation.x -= 0.0001;
-				}
-
-			}
-		}, true);
-
-		document.addEventListener('keydown', function (event) {
-			if (event.key == "s") {		// indietro tasto S
-				drone.mesh.position.z -= 0.001;
-				if (drone.elements.propellers.body.rotation.x >= 1.39) {
-					drone.elements.propellers.body.rotation.x -= 0.0001;
-				}
-
-			}
-		}, true);
-
-		document.addEventListener('keyup', function (event) {
-			if (event.key == "s") {		// inclinazione indietro
-				if (drone.elements.propellers.body.rotation.x < 1.57) {
-					drone.elements.propellers.body.rotation.x += 0.0001;
-				}
-
-			}
-		}, true);
-
-
-		document.addEventListener('keydown', function (event) {
-			if (event.key == "d") {		// destra tasto D
-				drone.mesh.position.x -= 0.001;
-				if (drone.elements.propellers.body.rotation.y <= 0.20) {
-					drone.elements.propellers.body.rotation.y += 0.0001;
-				}
-
-			}
-		}, true);
-
-		document.addEventListener('keyup', function (event) {
-			if (event.key == "d") {		// inclinazione destra
-				if (drone.elements.propellers.body.rotation.y >= 0) {
-					drone.elements.propellers.body.rotation.y -= 0.0001;
-				}
-
-			}
-		}, true);
-
-		document.addEventListener('keydown', function (event) {
-			if (event.key == "a") {		// sinistra tasto A
-				drone.mesh.position.x += 0.001;
-				if (drone.elements.propellers.body.rotation.y >= -0.20) {
-					drone.elements.propellers.body.rotation.y -= 0.0001;
-				}
-
-			}
-		}, true);
-
-		document.addEventListener('keyup', function (event) {
-			if (event.key == "a") {		// inclinazione sinistra
-				if (drone.elements.propellers.body.rotation.y <= 0) {
-					drone.elements.propellers.body.rotation.y += 0.0001;
-				}
-
-			}
-		}, true);
+		var tween_forward;
+		var tween_backwards;
+		var tween_right;
+		var tween_left;
 	}
 	console.log(drone)
 	{
 		document.addEventListener('keydown', function (event) {
-			inputs[event.key] = true;
+			let key = event.key.toLowerCase();
+			if ("wsadqe< ".indexOf(key) == -1) return;
+			if (!inputs[key]) {
+				if (inputs[exclusives[key]]) {
+					inputs_queue[key] = true;
+					return;
+				}
+				inputs[key] = true;
+				if (inputs.w) tween_forward = new TWEEN.Tween(drone.mesh.rotation).to({ x: 0.2 }, 500).start();
+				if (inputs.s) tween_backwards = new TWEEN.Tween(drone.mesh.rotation).to({ x: -0.2 }, 500).start();
+				if (inputs.d) tween_right = new TWEEN.Tween(drone.mesh.rotation).to({ z: 0.2 }, 500).start();
+				if (inputs.a) tween_left = new TWEEN.Tween(drone.mesh.rotation).to({ z: -0.2 }, 500).start();
+			}
 		});
 
 
 		document.addEventListener('keyup', function (event) {
-			inputs[event.key] = false;
+			let key = event.key.toLowerCase();
+			if ("wsadqe< ".indexOf(key) == -1) return;
+			inputs[key] = false;
+			inputs_queue[key] = false;
+			if (inputs_queue[exclusives[key]]) {
+				inputs_queue[exclusives[key]] = false;
+				inputs[exclusives[key]] = true;
+				if (inputs.w) tween_forward = new TWEEN.Tween(drone.mesh.rotation).to({ x: 0.2 }, 500).start();
+				if (inputs.s) tween_backwards = new TWEEN.Tween(drone.mesh.rotation).to({ x: -0.2 }, 500).start();
+				if (inputs.d) tween_right = new TWEEN.Tween(drone.mesh.rotation).to({ z: 0.2 }, 500).start();
+				if (inputs.a) tween_left = new TWEEN.Tween(drone.mesh.rotation).to({ z: -0.2 }, 500).start();
+			}
+			if (!(inputs.w || inputs.s)) new TWEEN.Tween(drone.mesh.rotation).to({ x: 0 }, 500).start()
+			if (!(inputs.a || inputs.d)) new TWEEN.Tween(drone.mesh.rotation).to({ z: 0 }, 500).start()
+			if (key === "w") {
+				tween_forward.stop();
+			}
+			if (key === "s") {
+				tween_backwards.stop();
+			}
+			if (key === "a") {
+				tween_left.stop();
+			}
+			if (key === "d") {
+				tween_right.stop();
+			}
 			// switch (event.key) {
 			// 	case "w":
 			// 		while (drone.mesh.rotation.x > 1.57) {
@@ -358,9 +331,6 @@ function main() {
 		var dt = time - oldtime;
 		oldtime = time;
 
-		hudBitmap.clearRect(0, 0, width, height);
-		hudBitmap.fillText(Math.round(1 / dt), 50, 50)
-		hudTexture.needsUpdate = true;
 
 		const prop_speed = 10;
 		const rot = time * prop_speed;
@@ -374,18 +344,29 @@ function main() {
 		var dO = ang_speed * dt;
 		var ds = speed * dt;
 		const g = -9.81;
-		if (inputs[" "]) ay += 0.1;
-		if (inputs["<"]) ay -= 0.1;
+		if (inputs[" "]) ay += 0.4;
+		if (inputs["<"]) ay -= 0.4;
+
 		if (inputs.w) drone.mesh.position.z += ds;
 		if (inputs.s) drone.mesh.position.z -= ds;
 		if (inputs.a) drone.mesh.position.x += ds;
 		if (inputs.d) drone.mesh.position.x -= ds;
 		if (inputs.e) drone.mesh.rotation.y += dO;
 		if (inputs.q) drone.mesh.rotation.y -= dO;
-		speedy += (ay+g) * dt;
+		speedy += (ay + g) * dt;
 		drone.mesh.position.y += speedy * dt;
-		
+		controls.target.set(drone.mesh.position.x, drone.mesh.position.y, drone.mesh.position.z);
+		controls.update();
+
+		hudBitmap.clearRect(0, 0, width, height);
+		hudBitmap.fillText(Math.round(1 / dt), 50, 50)
+		hudBitmap.fillText((ay + g).toFixed(2), 50, 100)
+		hudTexture.needsUpdate = true;
+
+
 		renderer.render(scene, camera);
+
 		renderer.render(sceneHUD, cameraHUD);
+		TWEEN.update()
 	}
 }
