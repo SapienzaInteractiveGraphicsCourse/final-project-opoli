@@ -259,38 +259,7 @@ function main() {
 			if (key === "d") {
 				tween_right.stop();
 			}
-			// switch (event.key) {
-			// 	case "w":
-			// 		while (drone.mesh.rotation.x > 1.57) {
-			// 			drone.mesh.rotation.x -= 0.0001;
-			// 		}
-			// 		break;
-			// 	case "s":
-			// 		while (drone.mesh.rotation.x < 1.57) {
-			// 			drone.mesh.rotation.x += 0.0001;
-			// 		}
-			// 		break;
-			// 	case "d":
-			// 		while (drone.mesh.rotation.y >= 0) {
-			// 			drone.mesh.rotation.y -= 0.0001;
-			// 		}
-			// 		break;
-			// 	case "a":
-			// 		while (drone.mesh.rotation.y <= 0) {
-			// 			drone.mesh.rotation.y += 0.0001;
-			// 		}
-			// 		break;
-			// 	default:
-			// 		break;
-			// }
 		});
-
-
-
-
-
-
-
 	}
 
 	// HUD
