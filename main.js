@@ -296,6 +296,7 @@ function main() {
 	var ay = 9.81;
 	var speedy = 0;
 	function animation(time) {
+		console.log(drone.elements.propellers.body.rotation.y)
 		time *= 0.001;
 		var dt = time - oldtime;
 		oldtime = time;
