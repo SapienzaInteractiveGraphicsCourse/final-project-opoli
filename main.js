@@ -2,7 +2,7 @@ import * as THREE from './three.js-master/build/three.module.js';
 import { GLTFLoader } from './three.js-master/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from './three.js-master/examples/jsm/controls/OrbitControls.js';
 import { MTLLoader } from './three.js-master/examples/jsm/loaders/MTLLoader.js';
-import TWEEN, { Tween } from './tween.js/dist/tween.esm.js'
+import TWEEN from './libs/tween.esm.js'
 function onProgress(xhr) {
 	console.log((xhr.loaded / xhr.total * 100) + '% loaded');
 }
