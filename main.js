@@ -1,8 +1,9 @@
 import * as THREE from './three.js-master/build/three.module.js';
 import { GLTFLoader } from './three.js-master/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from './three.js-master/examples/jsm/controls/OrbitControls.js';
+import { PointerLockControls } from './three.js-master/examples/jsm/controls/PointerLockControls.js';
 import { MTLLoader } from './three.js-master/examples/jsm/loaders/MTLLoader.js';
-import TWEEN from './libs/tween.esm.js'
+import TWEEN, { Easing } from './libs/tween.esm.js'
 function onProgress(xhr) {
 	console.log((xhr.loaded / xhr.total * 100) + '% loaded');
 }
@@ -53,6 +54,7 @@ function loadModels() {
 window.onload = loadModels;
 var drone = {
 	mesh: null,
+	referenceFrame: null,
 	positions: {
 		left: -1,
 		ahead: 0,
@@ -101,10 +103,50 @@ const exclusives = {
 	q: "e"
 }
 
+class ThirdPersonCamera {
+	constructor(params) {
+		this._params = params;
+		this._camera = params.camera;
+
+		this._currentPosition = new THREE.Vector3();
+		this._currentLookAt = new THREE.Vector3();
+	}
+
+	_CalculateOffset(theta, phi) {
+		const radius = this._params.radius;
+		const offset = new THREE.Vector3(Math.sin(theta) * Math.cos(phi) * radius, Math.sin(phi) * radius, Math.cos(phi) * Math.cos(theta) * radius);
+		offset.applyEuler(this._params.target.rotation);
+		offset.add(this._params.target.position);
+		return offset;
+	}
+
+	_CalculateLookAt() {
+		const lookAt = new THREE.Vector3(0, 0, 0);
+		lookAt.applyEuler(this._params.target.rotation);
+		lookAt.add(this._params.target.position);
+		return lookAt;
+	}
+
+	Update(timePassed, theta, phi) {
+		const offset = this._CalculateOffset(Math.PI - theta, phi);
+		const lookAt = this._CalculateLookAt();
+
+		const interpolate = 1.0 - Math.pow(0.0001, timePassed);
+
+		this._currentPosition.lerp(offset, interpolate);
+		this._currentLookAt.lerp(lookAt, interpolate);
+
+		this._camera.position.copy(this._currentPosition);
+		this._camera.lookAt(this._currentLookAt);
+	}
+}
+
 function main() {
 
 
-	let camera, scene, renderer;
+	let camera, scene, renderer, thirdPersonCamera, controls;
+	let radius, theta, phi;
+
 	var width = window.innerWidth;
 	var height = window.innerHeight;
 
@@ -118,14 +160,47 @@ function main() {
 	// creating scene
 	scene = new THREE.Scene();
 
-	camera = new THREE.PerspectiveCamera(45, width / height, 0.01, 1000);
-	camera.position.set(100, 50, 100);
+	// camera
+	{
+		camera = new THREE.PerspectiveCamera(60, width / height, 0.01, 1000);
+		// camera.position.set(0, 50, -100);
+		// camera.lookAt(0, 0, 0);
 
-	const controls = new OrbitControls(camera, canvas);
-	controls.target.set(0, 0, 0);
-	controls.minDistance = 80;
-	controls.maxDistance = 80;
-	controls.update();
+		radius = 60;
+		theta = 0;
+		phi = Math.PI / 6;
+
+		window.addEventListener('resize', () => {
+			width = window.innerWidth;
+			height = window.innerHeight;
+			camera.aspect = width / height;
+			camera.updateProjectionMatrix();
+			renderer.setSize(width, height);
+		}, false);
+
+		controls = new PointerLockControls(camera, canvas);
+
+		document.addEventListener('click', () => {
+			controls.lock();
+		})
+
+		document.addEventListener('mousemove', (event) => {
+			if (controls.isLocked) {
+				var dx = Math.max(-15, Math.min(event.movementX, 15))*0.001;
+				var dy = Math.max(-15, Math.min(event.movementY, 15))*0.001;
+
+				theta += dx * Math.PI / 2;
+				phi += dy * Math.PI / 2;
+				if (Math.abs(phi) > Math.PI / 2) {
+					phi = phi > 0 ? Math.PI / 2 - 0.001 : -Math.PI / 2 + 0.001;
+				}
+				phi -= Math.abs(phi) > 2 * Math.PI ? phi < 0 ? -2 * Math.PI : 2 * Math.PI : 0;
+				theta -= Math.abs(theta) > 2 * Math.PI ? theta < 0 ? -2 * Math.PI : 2 * Math.PI : 0;
+
+			}
+		})
+
+	}
 
 	// plane
 	{
@@ -181,8 +256,11 @@ function main() {
 		drone.mesh.name = "Drone";
 
 		drone.mesh.add(models.drone.gltf.getObjectByName('body'));
-		drone.mesh.position.y = 10;
-		scene.add(drone.mesh);
+		drone.referenceFrame = new THREE.Mesh();
+		drone.referenceFrame.position.y = 10;
+		drone.referenceFrame.add(new THREE.AxesHelper(15))
+		scene.add(drone.referenceFrame);
+		drone.referenceFrame.add(drone.mesh);
 		drone.mesh.traverse(o => {
 
 			if (o.name === "PropellerFR") {
@@ -207,6 +285,11 @@ function main() {
 
 	}
 	initDrone();
+	thirdPersonCamera = new ThirdPersonCamera({
+		camera: camera,
+		target: drone.referenceFrame,
+		radius: radius
+	})
 	{
 		var tween_forward;
 		var tween_backwards;
@@ -215,6 +298,16 @@ function main() {
 	}
 	console.log(drone)
 	{
+		var transition = 1000;
+		var ease_func = TWEEN.Easing.Elastic.Out;
+		// var ease_func = TWEEN.Easing.Quartic.Out;
+		function applyTweens(key) {
+			inputs[key] = true;
+			if (inputs.w) tween_forward = new TWEEN.Tween(drone.mesh.rotation).to({ x: 0.2 }, transition).start().easing(ease_func);
+			if (inputs.s) tween_backwards = new TWEEN.Tween(drone.mesh.rotation).to({ x: -0.2 }, transition).start().easing(ease_func);
+			if (inputs.d) tween_right = new TWEEN.Tween(drone.mesh.rotation).to({ z: 0.2 }, transition).start().easing(ease_func);
+			if (inputs.a) tween_left = new TWEEN.Tween(drone.mesh.rotation).to({ z: -0.2 }, transition).start().easing(ease_func);
+		}
 		document.addEventListener('keydown', function (event) {
 			let key = event.key.toLowerCase();
 			if ("wsadqe< ".indexOf(key) == -1) return;
@@ -223,14 +316,10 @@ function main() {
 					inputs_queue[key] = true;
 					return;
 				}
-				inputs[key] = true;
-				if (inputs.w) tween_forward = new TWEEN.Tween(drone.mesh.rotation).to({ x: 0.2 }, 500).start();
-				if (inputs.s) tween_backwards = new TWEEN.Tween(drone.mesh.rotation).to({ x: -0.2 }, 500).start();
-				if (inputs.d) tween_right = new TWEEN.Tween(drone.mesh.rotation).to({ z: 0.2 }, 500).start();
-				if (inputs.a) tween_left = new TWEEN.Tween(drone.mesh.rotation).to({ z: -0.2 }, 500).start();
+
+				applyTweens(key);
 			}
 		});
-
 
 		document.addEventListener('keyup', function (event) {
 			let key = event.key.toLowerCase();
@@ -239,14 +328,10 @@ function main() {
 			inputs_queue[key] = false;
 			if (inputs_queue[exclusives[key]]) {
 				inputs_queue[exclusives[key]] = false;
-				inputs[exclusives[key]] = true;
-				if (inputs.w) tween_forward = new TWEEN.Tween(drone.mesh.rotation).to({ x: 0.2 }, 500).start();
-				if (inputs.s) tween_backwards = new TWEEN.Tween(drone.mesh.rotation).to({ x: -0.2 }, 500).start();
-				if (inputs.d) tween_right = new TWEEN.Tween(drone.mesh.rotation).to({ z: 0.2 }, 500).start();
-				if (inputs.a) tween_left = new TWEEN.Tween(drone.mesh.rotation).to({ z: -0.2 }, 500).start();
+				applyTweens(exclusives[key]);
 			}
-			if (!(inputs.w || inputs.s)) new TWEEN.Tween(drone.mesh.rotation).to({ x: 0 }, 500).start()
-			if (!(inputs.a || inputs.d)) new TWEEN.Tween(drone.mesh.rotation).to({ z: 0 }, 500).start()
+			if (!(inputs.w || inputs.s)) new TWEEN.Tween(drone.mesh.rotation).to({ x: 0 }, transition).start().easing(ease_func);
+			if (!(inputs.a || inputs.d)) new TWEEN.Tween(drone.mesh.rotation).to({ z: 0 }, transition).start().easing(ease_func);
 			if (key === "w") {
 				tween_forward.stop();
 			}
@@ -296,7 +381,6 @@ function main() {
 	var ay = 9.81;
 	var speedy = 0;
 	function animation(time) {
-		console.log(drone.elements.propellers.body.rotation.y)
 		time *= 0.001;
 		var dt = time - oldtime;
 		oldtime = time;
@@ -317,16 +401,32 @@ function main() {
 		if (inputs[" "]) ay += 0.4;
 		if (inputs["<"]) ay -= 0.4;
 
-		if (inputs.w) drone.mesh.position.z += ds;
-		if (inputs.s) drone.mesh.position.z -= ds;
-		if (inputs.a) drone.mesh.position.x += ds;
-		if (inputs.d) drone.mesh.position.x -= ds;
-		if (inputs.e) drone.mesh.rotation.y += dO;
-		if (inputs.q) drone.mesh.rotation.y -= dO;
+		if (inputs.e) drone.referenceFrame.rotation.y -= dO;
+		if (inputs.q) drone.referenceFrame.rotation.y += dO;
+
+		var cos_rot_y = Math.cos(drone.referenceFrame.rotation.y);
+		var sin_rot_y = Math.sin(drone.referenceFrame.rotation.y);
+		if (inputs.w) {
+			drone.referenceFrame.position.z += cos_rot_y * ds;
+			drone.referenceFrame.position.x += sin_rot_y * ds;
+		}
+		if (inputs.s) {
+			drone.referenceFrame.position.z -= cos_rot_y * ds;
+			drone.referenceFrame.position.x -= sin_rot_y * ds;
+		}
+		if (inputs.a) {
+			drone.referenceFrame.position.x += cos_rot_y * ds;
+			drone.referenceFrame.position.z -= sin_rot_y * ds;
+		}
+		if (inputs.d) {
+			drone.referenceFrame.position.x -= cos_rot_y * ds;
+			drone.referenceFrame.position.z += sin_rot_y * ds;
+		}
 		speedy += (ay + g) * dt;
-		drone.mesh.position.y += speedy * dt;
-		controls.target.set(drone.mesh.position.x, drone.mesh.position.y, drone.mesh.position.z);
-		controls.update();
+		drone.referenceFrame.position.y += speedy * dt;
+		// camera.lookAt(drone.referenceFrame.position.x, drone.referenceFrame.position.y, drone.referenceFrame.position.z);
+		// controls.update();
+		thirdPersonCamera.Update(dt, theta, phi);
 
 		hudBitmap.clearRect(0, 0, width, height);
 		hudBitmap.fillText(Math.round(1 / dt), 50, 50)
