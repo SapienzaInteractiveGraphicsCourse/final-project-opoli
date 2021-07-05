@@ -296,11 +296,13 @@ function main() {
 		var tween_right;
 		var tween_left;
 	}
-	console.log(drone)
+	
+	// drone tweens
 	{
-		var transition = 1000;
-		var ease_func = TWEEN.Easing.Elastic.Out;
+		var transition = 500;
+		// var ease_func = TWEEN.Easing.Elastic.Out;
 		// var ease_func = TWEEN.Easing.Quartic.Out;
+		var ease_func = TWEEN.Easing.Back.Out;
 		function applyTweens(key) {
 			inputs[key] = true;
 			if (inputs.w) tween_forward = new TWEEN.Tween(drone.mesh.rotation).to({ x: 0.2 }, transition).start().easing(ease_func);
