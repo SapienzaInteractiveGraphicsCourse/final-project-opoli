@@ -176,6 +176,7 @@ function main() {
 			camera.aspect = width / height;
 			camera.updateProjectionMatrix();
 			renderer.setSize(width, height);
+			max_mousemove = Math.pow(1580, 1/camera.aspect);
 		}, false);
 
 		controls = new PointerLockControls(camera, canvas);
@@ -183,11 +184,11 @@ function main() {
 		document.addEventListener('click', () => {
 			controls.lock();
 		})
-
+		var max_mousemove = Math.pow(1580, 1/camera.aspect);;
 		document.addEventListener('mousemove', (event) => {
 			if (controls.isLocked) {
-				var dx = Math.max(-15, Math.min(event.movementX, 15))*0.001;
-				var dy = Math.max(-15, Math.min(event.movementY, 15))*0.001;
+				var dx = Math.max(-max_mousemove, Math.min(event.movementX, max_mousemove))*0.001;
+				var dy = Math.max(-max_mousemove, Math.min(event.movementY, max_mousemove))*0.001;
 
 				theta += dx * Math.PI / 2;
 				phi += dy * Math.PI / 2;
@@ -299,7 +300,7 @@ function main() {
 	
 	// drone tweens
 	{
-		var transition = 500;
+		var transition = 700;
 		// var ease_func = TWEEN.Easing.Elastic.Out;
 		// var ease_func = TWEEN.Easing.Quartic.Out;
 		var ease_func = TWEEN.Easing.Back.Out;
@@ -389,11 +390,11 @@ function main() {
 
 
 		const prop_speed = 10;
-		const rot = time * prop_speed;
-		drone.elements.propellers.propellerFR.rotation.y = -rot;
-		drone.elements.propellers.propellerFL.rotation.y = -rot;
-		drone.elements.propellers.propellerBR.rotation.y = -rot;
-		drone.elements.propellers.propellerBL.rotation.y = -rot;
+		const rot = dt * prop_speed;
+		drone.elements.propellers.propellerFR.rotation.y += -rot;
+		drone.elements.propellers.propellerFL.rotation.y += -rot;
+		drone.elements.propellers.propellerBR.rotation.y += -rot;
+		drone.elements.propellers.propellerBL.rotation.y += -rot;
 
 		const speed = 50;
 		const ang_speed = 1;
