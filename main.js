@@ -11,9 +11,55 @@ function onError(error) {
 	console.log('An error happened');
 }
 var modelsLoaded = false;
+var soundsLoaded = false;
+
 const models = {
 	drone: { url: './models/drone.gltf' }
 }
+
+
+const sounds = {
+	background: { url: './sounds/music.mp3'}
+}
+
+
+var sound, listener, audioLoader;
+function loadSounds() {
+
+	const soundsLoaderMngr = new THREE.LoadingManager();
+	soundsLoaderMngr.onLoad = () => {
+		soundsLoaded = true;
+	
+		if(modelsLoaded & soundsLoaded) {
+			main();
+		}
+	};
+
+	soundsLoaderMngr.onProgress = (url, itemsLoaded, itemsTotal) => {
+		console.log("Loading sounds... ", itemsLoaded / itemsTotal * 100, '%');
+	};
+
+	{
+		const audioLoader = new THREE.AudioLoader(soundsLoaderMngr);
+		for (const sound of Object.values(sounds)) {
+			audioLoader.load( sound.url, function( buffer ) {
+				
+				sound.sound = buffer;
+
+				console.log("Loaded ", buffer);
+			});
+		}
+	} 
+}
+
+function playSoundTrack(){
+	sound.isPlaying = false;
+	sound.setBuffer(sounds.background.sound);
+	sound.setLoop(true);
+	sound.setVolume(0.3);
+	sound.play();
+}
+
 function loadModels() {
 	const modelsLoadMngr = new THREE.LoadingManager();
 	modelsLoadMngr.onLoad = () => {
@@ -21,7 +67,7 @@ function loadModels() {
 
 		// document.querySelector('#models_loading').hidden = true;
 
-		if (modelsLoaded) {
+		if (modelsLoaded & soundsLoaded) {
 			main();
 		}
 	};
@@ -51,7 +97,11 @@ function loadModels() {
 	}
 }
 
-window.onload = loadModels;
+window.onload = () => {
+	loadModels();
+	loadSounds();
+}
+
 var drone = {
 	mesh: null,
 	referenceFrame: null,
@@ -146,7 +196,6 @@ class ThirdPersonCamera {
 
 function main() {
 
-
 	let camera, scene, renderer, thirdPersonCamera, controls;
 	let radius, theta, phi;
 
@@ -209,6 +258,16 @@ function main() {
 			}
 		})
 
+	}
+
+	//sounds
+	{
+		listener = new THREE.AudioListener();
+		camera.add(listener);
+		sound = new THREE.Audio(listener);
+		audioLoader = new THREE.AudioLoader();
+
+	
 	}
 
 	// plane
@@ -357,6 +416,9 @@ function main() {
 			// event listeners
 			document.addEventListener('keydown', function (event) {
 				let key = event.key.toLowerCase();
+				if(key === 'u') {
+					playSoundTrack();
+				}
 				if ("wsadqe< ".indexOf(key) == -1) return;
 				if (!inputs[key]) {
 					if (inputs[exclusives[key]]) {
