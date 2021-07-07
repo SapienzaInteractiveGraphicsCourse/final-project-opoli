@@ -1,1 +1,2 @@
 ﻿# Tisca... Tusca... project-opoli
+This work is based on "City Grid Block" (https://sketchfab.com/3d-models/city-grid-block-3488e40ceca846bb9023f894a749c398) by antoniojmonteiro (https://sketchfab.com/antoniojmonteiro) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

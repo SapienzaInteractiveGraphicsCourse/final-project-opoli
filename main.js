@@ -12,7 +12,8 @@ function onError(error) {
 }
 var modelsLoaded = false;
 const models = {
-	drone: { url: './models/drone.gltf' }
+	drone: { url: './models/drone.gltf' },
+	city: { url: './models/city2.glb' }
 }
 function loadModels() {
 	const modelsLoadMngr = new THREE.LoadingManager();
@@ -40,7 +41,7 @@ function loadModels() {
 					if (child.isMesh) {
 						child.castShadow = true;
 						child.receiveShadow = true;
-						child.material = standardMaterial;
+						// child.material = standardMaterial;
 					}
 
 				});
@@ -54,21 +55,18 @@ function loadModels() {
 window.onload = loadModels;
 var drone = {
 	mesh: null,
-	referenceFrame: null,
-	positions: {
-		left: -1,
-		ahead: 0,
-		right: 1,
-		back: 2,
-		up: 3,
-		down: 4
-	},
+	positionFrame: null,
+	rotationFrame: null,
 	elements: {
 		propellers: {},
 	},
 	rotations: {
 
 	}
+}
+
+var city = {
+	mesh: null
 }
 
 // controls
@@ -165,7 +163,7 @@ function main() {
 
 	// camera
 	{
-		camera = new THREE.PerspectiveCamera(60, width / height, 0.01, 1000);
+		camera = new THREE.PerspectiveCamera(60, width / height, 0.01, 2000);
 
 		radius = 60;
 		theta = 0;
@@ -212,27 +210,27 @@ function main() {
 	}
 
 	// plane
-	{
-		const planeSize = 400;
+	// {
+	// 	const planeSize = 400;
 
-		const loader = new THREE.TextureLoader();
-		const texture = loader.load('./textures/checker.png');
-		texture.wrapS = THREE.RepeatWrapping;
-		texture.wrapT = THREE.RepeatWrapping;
-		texture.magFilter = THREE.NearestFilter;
-		const repeats = planeSize / 20;
-		texture.repeat.set(repeats, repeats);
+	// 	const loader = new THREE.TextureLoader();
+	// 	const texture = loader.load('./textures/checker.png');
+	// 	texture.wrapS = THREE.RepeatWrapping;
+	// 	texture.wrapT = THREE.RepeatWrapping;
+	// 	texture.magFilter = THREE.NearestFilter;
+	// 	const repeats = planeSize / 20;
+	// 	texture.repeat.set(repeats, repeats);
 
-		const planeGeo = new THREE.PlaneGeometry(planeSize, planeSize);
-		const planeMat = new THREE.MeshPhongMaterial({
-			map: texture,
-			side: THREE.DoubleSide,
-		});
-		const mesh = new THREE.Mesh(planeGeo, planeMat);
-		mesh.rotation.x = Math.PI * -.5;
-		mesh.receiveShadow = true;
-		scene.add(mesh);
-	}
+	// 	const planeGeo = new THREE.PlaneGeometry(planeSize, planeSize);
+	// 	const planeMat = new THREE.MeshPhongMaterial({
+	// 		map: texture,
+	// 		side: THREE.DoubleSide,
+	// 	});
+	// 	const mesh = new THREE.Mesh(planeGeo, planeMat);
+	// 	mesh.rotation.x = Math.PI * -.5;
+	// 	mesh.receiveShadow = true;
+	// 	scene.add(mesh);
+	// }
 	// sky
 	{
 		const skyColor = 0xB1E1FF;  // light blue
@@ -241,35 +239,19 @@ function main() {
 		const light = new THREE.HemisphereLight(skyColor, groundColor, intensity);
 		scene.add(light);
 	}
-	// dirlight
-	{
-		const color = 0xFFFFFF;
-		const intensity = 1;
-		const light = new THREE.DirectionalLight(color, intensity);
-		light.castShadow = true;
-		light.position.set(100, 100, 0);
-		light.target.position.set(0, 0, 0);
-		light.shadow.camera = new THREE.OrthographicCamera(-50, 50, 50, -50);
-		light.shadow.mapSize.width = 2048;
-		light.shadow.mapSize.height = 2048;
-		console.log(light.shadow.camera)
-		scene.add(light);
-		scene.add(light.target);
-		const cameraHelper = new THREE.CameraHelper(light.shadow.camera);
-		scene.add(cameraHelper);
-	}
-
 
 	function initDrone() {
 		drone.mesh = new THREE.Object3D();
 		drone.mesh.name = "Drone";
 
 		drone.mesh.add(models.drone.gltf.getObjectByName('body'));
-		drone.referenceFrame = new THREE.Mesh();
-		drone.referenceFrame.position.y = 10;
-		drone.referenceFrame.add(new THREE.AxesHelper(15))
-		scene.add(drone.referenceFrame);
-		drone.referenceFrame.add(drone.mesh);
+		drone.positionFrame = new THREE.Mesh();
+		drone.positionFrame.position.y = 0;
+		drone.rotationFrame = new THREE.Mesh();
+		drone.rotationFrame.add(new THREE.AxesHelper(15))
+		scene.add(drone.positionFrame);
+		drone.positionFrame.add(drone.rotationFrame)
+		drone.rotationFrame.add(drone.mesh);
 		drone.mesh.traverse(o => {
 
 			if (o.name === "PropellerFR") {
@@ -412,7 +394,33 @@ function main() {
 		}
 	}
 	initDrone();
-	thirdPersonCamera.SetTarget(drone.referenceFrame);
+
+	function initCity() {
+		city.mesh = new THREE.Object3D();
+		city.mesh.name = "City";
+
+		city.mesh.add(models.city.gltf.getObjectByName('Model'));
+		scene.add(city.mesh);
+	}
+	initCity();
+	// dirlight
+	{
+		const color = 0xFFFFFF;
+		const intensity = 1;
+		const light = new THREE.DirectionalLight(color, intensity);
+		light.castShadow = true;
+		light.position.set(10000, 5000, 0);
+		light.target.position.set(0, 0, 0);
+		light.shadow.camera = new THREE.OrthographicCamera(-500, 500, 500, -500, 1, 20000);
+		light.shadow.mapSize.width = 8192;
+		light.shadow.mapSize.height = 8192;
+		console.log(light.shadow.camera)
+		drone.positionFrame.add(light);
+		drone.positionFrame.add(light.target);
+		const cameraHelper = new THREE.CameraHelper(light.shadow.camera);
+		scene.add(cameraHelper);
+	}
+	thirdPersonCamera.SetTarget(drone.positionFrame);
 
 
 
@@ -454,7 +462,7 @@ function main() {
 	var acc = new THREE.Vector3();
 	const max_acc = 12;
 	acc.y = 0;
-	const max_p_speed = Math.sqrt(max_acc/4)
+	const max_p_speed = Math.sqrt(max_acc / 4)
 	const g = -0;
 	var p_speed_p = new THREE.Vector4();
 	var p_speed_r = new THREE.Vector4();
@@ -472,8 +480,8 @@ function main() {
 
 		// 4 * kf * p_speed ^ 2 * cos phi * cos th = acc.y - kt * speed.y
 
-		const p_speed = Math.sqrt(Math.max(acc.y, 0)/(4*Math.cos(drone.mesh.rotation.x)*Math.cos(drone.mesh.rotation.z)))/max_p_speed*max_rps;
-		
+		const p_speed = Math.sqrt(Math.max(acc.y, 0) / (4 * Math.cos(drone.mesh.rotation.x) * Math.cos(drone.mesh.rotation.z))) / max_p_speed * max_rps;
+
 		p_speed_p.x = -drone.mesh.rotation.x * 10;
 		p_speed_p.y = -drone.mesh.rotation.x * 10;
 		p_speed_p.z = drone.mesh.rotation.x * 10;
@@ -498,19 +506,19 @@ function main() {
 		const dx = speed.x * dt;
 		const dz = speed.z * dt;
 
-		drone.referenceFrame.rotation.y += dO;
+		drone.rotationFrame.rotation.y += dO;
 
-		const cos_rot_y = Math.cos(drone.referenceFrame.rotation.y);
-		const sin_rot_y = Math.sin(drone.referenceFrame.rotation.y);
+		const cos_rot_y = Math.cos(drone.rotationFrame.rotation.y);
+		const sin_rot_y = Math.sin(drone.rotationFrame.rotation.y);
 
 		// console.log(speed);
-		drone.referenceFrame.position.z += cos_rot_y * dx;
-		drone.referenceFrame.position.x += sin_rot_y * dx;
-		drone.referenceFrame.position.x -= cos_rot_y * dz;
-		drone.referenceFrame.position.z += sin_rot_y * dz;
+		drone.positionFrame.position.z += cos_rot_y * dx;
+		drone.positionFrame.position.x += sin_rot_y * dx;
+		drone.positionFrame.position.x -= cos_rot_y * dz;
+		drone.positionFrame.position.z += sin_rot_y * dz;
 
 		speed.y += (acc.y + g) * dt;
-		drone.referenceFrame.position.y += speed.y * dt;
+		drone.positionFrame.position.y += speed.y * dt;
 		thirdPersonCamera.Update(dt, theta, phi);
 
 		hudBitmap.clearRect(0, 0, width, height);
