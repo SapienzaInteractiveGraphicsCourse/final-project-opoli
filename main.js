@@ -13,7 +13,7 @@ function onError(error) {
 var modelsLoaded = false;
 const models = {
 	drone: { url: './models/drone.gltf' },
-	city: { url: './models/city2.glb' }
+	city: { url: './models/city.glb' }
 }
 function loadModels() {
 	const modelsLoadMngr = new THREE.LoadingManager();
@@ -35,13 +35,26 @@ function loadModels() {
 		for (const model of Object.values(models)) {
 			console.log("Loading Model: ", model);
 			gltfLoader.load(model.url, (gltf) => {
-				const standardMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 })
+				const standardMaterial = new THREE.MeshPhongMaterial();
 				gltf.scene.traverse(function (child) {
 
 					if (child.isMesh) {
 						child.castShadow = true;
 						child.receiveShadow = true;
-						// child.material = standardMaterial;
+						if (child.material.depthWrite == true) console.log(child.material)
+						child.material = new THREE.MeshStandardMaterial({
+							color: child.material.color,
+							emissive: child.material.emissive,
+							opacity: child.material.opacity,
+							transparent: child.material.transparent,
+							polygonOffset: child.material.polygonOffset,
+							refractionRatio: child.material.refractionRatio,
+							// metalness: child.material.metalness,
+							// roughness: child.material.roughness,
+							side: THREE.FrontSide,
+							fog:true
+						});
+						if (child.material.depthWrite == true) console.log(child.material)
 					}
 
 				});
@@ -152,20 +165,25 @@ function main() {
 	var height = window.innerHeight;
 
 	const canvas = document.querySelector('#c');
-	renderer = new THREE.WebGL1Renderer({ canvas });
+	renderer = new THREE.WebGL1Renderer({
+		canvas,
+		// logarithmicDepthBuffer: true
+	});
+	renderer.setPixelRatio(window.devicePixelRatio);
 	renderer.setSize(width, height);
 	renderer.autoClear = false;
 	renderer.setAnimationLoop(animation);
 	renderer.shadowMap.enabled = true
+	renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 	// creating scene
 	scene = new THREE.Scene();
 
 	// camera
 	{
-		camera = new THREE.PerspectiveCamera(60, width / height, 0.01, 2000);
+		camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 40);
 
-		radius = 60;
+		radius = 0.6;
 		theta = 0;
 		phi = Math.PI / 6;
 
@@ -245,8 +263,9 @@ function main() {
 		drone.mesh.name = "Drone";
 
 		drone.mesh.add(models.drone.gltf.getObjectByName('body'));
+		drone.mesh.scale.set(0.01, 0.01, 0.01)
 		drone.positionFrame = new THREE.Mesh();
-		drone.positionFrame.position.y = 0;
+		// drone.positionFrame.position.set(-34.64, 0.5, -37.50);
 		drone.rotationFrame = new THREE.Mesh();
 		drone.rotationFrame.add(new THREE.AxesHelper(15))
 		scene.add(drone.positionFrame);
@@ -302,33 +321,33 @@ function main() {
 			function applyTweens(key) {
 				inputs[key] = true;
 				if (inputs.w) tweens.w = [
-					new TWEEN.Tween(speed).to({ x: 100 }, transition_s).start().easing(ease_func_speed),
+					new TWEEN.Tween(speed).to({ x: 1 }, transition_s).start().easing(ease_func_speed),
 					new TWEEN.Tween(drone.mesh.rotation).to({ x: 0.2 }, transition).start().easing(ease_func)
 				];
 				if (inputs.s) tweens.s = [
-					new TWEEN.Tween(speed).to({ x: -100 }, transition_s).start().easing(ease_func_speed),
+					new TWEEN.Tween(speed).to({ x: -1 }, transition_s).start().easing(ease_func_speed),
 					new TWEEN.Tween(drone.mesh.rotation).to({ x: -0.2 }, transition).start().easing(ease_func)
 				];
 				if (inputs.d) tweens.d = [
-					new TWEEN.Tween(speed).to({ z: 100 }, transition_s).start().easing(ease_func_speed),
+					new TWEEN.Tween(speed).to({ z: 1 }, transition_s).start().easing(ease_func_speed),
 					new TWEEN.Tween(drone.mesh.rotation).to({ z: 0.2 }, transition).start().easing(ease_func)
 				];
 				if (inputs.a) tweens.a = [
-					new TWEEN.Tween(speed).to({ z: -100 }, transition_s).start().easing(ease_func_speed),
+					new TWEEN.Tween(speed).to({ z: -1 }, transition_s).start().easing(ease_func_speed),
 					new TWEEN.Tween(drone.mesh.rotation).to({ z: -0.2 }, transition).start().easing(ease_func)
 				];
 				if (inputs.e) tweens.e = new TWEEN.Tween(o_speed).to({ y: -Math.PI }, time_yaw).start().easing(ease_func_up);
 				if (inputs.q) tweens.q = new TWEEN.Tween(o_speed).to({ y: Math.PI }, time_yaw).start().easing(ease_func_up);
 				if (throttle_control) return;
 				if (inputs[" "] && acc.y < 12 && !tweens[" "]) {
-					tweens[" "] = new TWEEN.Tween(acc).to({ y: '+12.1' }, time_up).start().easing(ease_func_up).onUpdate(() => {
+					tweens[" "] = new TWEEN.Tween(speed).to({ y: '+1.2' }, time_up).start().easing(ease_func_up).onUpdate(() => {
 						if (acc.y < 12) return;
 						tweens[" "].stop();
 						tweens[" "] = null;
 					});
 				}
 				if (inputs["<"] && acc.y > 0 && !tweens["<"]) {
-					tweens["<"] = new TWEEN.Tween(acc).to({ y: '-12.1' }, time_up).start().easing(ease_func_up).onUpdate(() => {
+					tweens["<"] = new TWEEN.Tween(speed).to({ y: '-1.2' }, time_up).start().easing(ease_func_up).onUpdate(() => {
 						if (acc.y > 0) return;
 						tweens["<"].stop();
 						tweens["<"] = null;
@@ -339,6 +358,7 @@ function main() {
 			// event listeners
 			document.addEventListener('keydown', function (event) {
 				let key = event.key.toLowerCase();
+				if (key === "h") console.log(drone.positionFrame.position)
 				if ("wsadqe< ".indexOf(key) == -1) return;
 				if (!inputs[key]) {
 					if (inputs[exclusives[key]]) {
@@ -399,7 +419,10 @@ function main() {
 		city.mesh = new THREE.Object3D();
 		city.mesh.name = "City";
 
-		city.mesh.add(models.city.gltf.getObjectByName('Model'));
+		city.mesh.add(models.city.gltf.getObjectByName('Model1'));
+		console.log(city.mesh);
+		city.mesh.position.set(34.64*2, -0.5*2, 37.50*2);
+		city.mesh.scale.set(2, 2, 2);
 		scene.add(city.mesh);
 	}
 	initCity();
@@ -409,16 +432,19 @@ function main() {
 		const intensity = 1;
 		const light = new THREE.DirectionalLight(color, intensity);
 		light.castShadow = true;
-		light.position.set(10000, 5000, 0);
+		light.position.set(10, 10, 0);
 		light.target.position.set(0, 0, 0);
-		light.shadow.camera = new THREE.OrthographicCamera(-500, 500, 500, -500, 1, 20000);
+		light.shadow.camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 1, 20);
 		light.shadow.mapSize.width = 8192;
 		light.shadow.mapSize.height = 8192;
-		console.log(light.shadow.camera)
+		light.shadow.bias = -0.004;
+		// console.log(light.shadow.camera)
 		drone.positionFrame.add(light);
 		drone.positionFrame.add(light.target);
 		const cameraHelper = new THREE.CameraHelper(light.shadow.camera);
-		scene.add(cameraHelper);
+		// scene.add(cameraHelper);
+		const lightHelper = new THREE.DirectionalLightHelper(light, 5, 0xff0000);
+		scene.add(lightHelper);
 	}
 	thirdPersonCamera.SetTarget(drone.positionFrame);
 
@@ -461,9 +487,9 @@ function main() {
 	};
 	var acc = new THREE.Vector3();
 	const max_acc = 12;
-	acc.y = 0;
+	acc.y = 10;
 	const max_p_speed = Math.sqrt(max_acc / 4)
-	const g = -0;
+	const g = -10;
 	var p_speed_p = new THREE.Vector4();
 	var p_speed_r = new THREE.Vector4();
 	var p_speed_y = new THREE.Vector4();
