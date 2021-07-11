@@ -23,6 +23,21 @@ const sounds = {
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+const vertex = new THREE.Vector3();
+
+
 var sound, listener, audioLoader;
 function loadSounds() {
 
@@ -196,7 +211,7 @@ class ThirdPersonCamera {
 
 function main() {
 
-	let camera, scene, renderer, thirdPersonCamera, controls;
+	let camera, scene, renderer, thirdPersonCamera, controls, rain, rainGeo, rainCount = 15000;
 	let radius, theta, phi;
 
 	var width = window.innerWidth;
@@ -268,6 +283,30 @@ function main() {
 		audioLoader = new THREE.AudioLoader();
 
 	
+	}
+
+	//rain
+	{
+
+		const points = [];
+		for(let i=0;i<rainCount;i++) {
+			let rainDrop = new THREE.Vector3(
+			  Math.random() * 400 -200,
+			  Math.random() * 500 - 250,
+			  Math.random() * 400 - 200
+			);
+			rainDrop.velocity = {};
+			rainDrop.velocity = 0;
+			points.push(rainDrop);
+		}
+		rainGeo = new THREE.BufferGeometry().setFromPoints( points );
+        let rainMaterial = new THREE.PointsMaterial({
+        color: 0xaaaaaa,
+        size: 0.1,
+        transparent: true
+        });
+        rain = new THREE.Points(rainGeo,rainMaterial);
+        scene.add(rain);
 	}
 
 	// plane
@@ -579,6 +618,30 @@ function main() {
 		hudBitmap.fillText(Math.round(1 / dt), 50, 50)
 		hudBitmap.fillText((acc.y + g).toFixed(2), 50, 100)
 		hudTexture.needsUpdate = true;
+
+
+		//animazione pioggia
+		var positionAttribute = rain.geometry.getAttribute( 'position' );
+	
+    	for ( var i = 0; i < positionAttribute.count; i ++ ) {
+	
+        	vertex.fromBufferAttribute( positionAttribute, i );
+			
+
+        	vertex.y -= 1;
+		
+        	if (vertex.y < - 200) {
+            	vertex.y = 200;
+        	}
+		
+        	positionAttribute.setXYZ( i, vertex.x, vertex.y, vertex.z );
+	
+    	}
+
+    	positionAttribute.needsUpdate = true;
+
+
+
 
 
 		renderer.render(scene, camera);
