@@ -426,6 +426,7 @@ function main() {
 		scene.add(city.mesh);
 	}
 	initCity();
+
 	// dirlight
 	{
 		const color = 0xFFFFFF;
@@ -435,8 +436,8 @@ function main() {
 		light.position.set(10, 10, 0);
 		light.target.position.set(0, 0, 0);
 		light.shadow.camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 1, 20);
-		light.shadow.mapSize.width = 8192;
-		light.shadow.mapSize.height = 8192;
+		light.shadow.mapSize.width = 4096;
+		light.shadow.mapSize.height = 4096;
 		light.shadow.bias = -0.004;
 		// console.log(light.shadow.camera)
 		drone.positionFrame.add(light);
