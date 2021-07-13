@@ -3,7 +3,9 @@ import { GLTFLoader } from './three.js-master/examples/jsm/loaders/GLTFLoader.js
 import { OrbitControls } from './three.js-master/examples/jsm/controls/OrbitControls.js';
 import { PointerLockControls } from './three.js-master/examples/jsm/controls/PointerLockControls.js';
 import { MTLLoader } from './three.js-master/examples/jsm/loaders/MTLLoader.js';
-import TWEEN, { Easing, Tween } from './libs/tween.esm.js'
+import TWEEN, { Easing, Tween } from './libs/tween.esm.js';
+import {OimoPhysics} from './three.js-master/examples/jsm/physics/OimoPhysics.js';
+
 function onProgress(xhr) {
 	console.log((xhr.loaded / xhr.total * 100) + '% loaded');
 }
