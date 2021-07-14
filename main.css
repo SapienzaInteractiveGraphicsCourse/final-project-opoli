@@ -11,7 +11,13 @@ body {
     position: absolute;
     left: 0;
     bottom: 0;
+    z-index: 1;
+    display: none;
 }
 canvas {
     display: block;    
+}
+
+#menu img {
+    padding: 2px;
 }

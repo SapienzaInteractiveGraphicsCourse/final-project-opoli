@@ -60,11 +60,18 @@ function loadSounds() {
 	}
 }
 
+<<<<<<< HEAD
 function playSoundTrack() {
 	if (sound.isPlaying) {
+=======
+function playSoundTrack(){
+	if(sound.isPlaying) {
+		document.getElementById("musicbutton").src = './menu/soundoff.png';
+>>>>>>> 6471f94c09cf867b967324b2f2614dc57c9a51c5
 		sound.pause();
 		droneSound.pause();
 	} else {
+		document.getElementById("musicbutton").src = './menu/soundin.png';
 		sound.isPlaying = false;
 		sound.setBuffer(sounds.background.sound);
 		sound.setLoop(true);
@@ -77,6 +84,7 @@ function playSoundTrack() {
 		droneSound.play();
 	}
 }
+
 
 function loadModels() {
 	const modelsLoadMngr = new THREE.LoadingManager();
@@ -144,6 +152,7 @@ function loadModels() {
 window.onload = () => {
 	loadModels();
 	loadSounds();
+	document.getElementById("musicbutton").addEventListener("click", playSoundTrack);
 }
 
 var drone = {
@@ -235,8 +244,10 @@ class ThirdPersonCamera {
 	}
 }
 
-async function main() {
 
+async function main() {
+	document.getElementById("menu").style.display = 'block';
+	
 	let camera, scene, renderer, thirdPersonCamera, controls, rain, rainGeo, rainCount = 15000;
 	let radius, theta, phi;
 	let physics = await OimoPhysics();
@@ -343,9 +354,6 @@ async function main() {
 		scene.add(rain);
 	}
 
-	// plane
-	{
-	}
 	// sky
 	{
 		const skyColor = 0xB1E1FF;  // light blue
