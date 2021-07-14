@@ -22,26 +22,14 @@ const models = {
 
 
 const sounds = {
-	background: { url: './sounds/music.mp3'}
+	background: { url: './sounds/music.mp3'},
+	drone: { url: './sounds/drone.mp3'},
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 const vertex = new THREE.Vector3();
 
 
-var sound, listener, audioLoader;
+var sound, listener, droneSound, audioLoader;
 function loadSounds() {
 
 	const soundsLoaderMngr = new THREE.LoadingManager();
@@ -71,11 +59,21 @@ function loadSounds() {
 }
 
 function playSoundTrack(){
-	sound.isPlaying = false;
-	sound.setBuffer(sounds.background.sound);
-	sound.setLoop(true);
-	sound.setVolume(0.3);
-	sound.play();
+	if(sound.isPlaying) {
+		sound.pause();
+		droneSound.pause();
+	} else {
+		sound.isPlaying = false;
+		sound.setBuffer(sounds.background.sound);
+		sound.setLoop(true);
+		sound.setVolume(0.15);
+		sound.play();
+		droneSound.isPlaying = false;
+		droneSound.setBuffer(sounds.drone.sound);
+		droneSound.setLoop(true);
+		droneSound.setVolume(0.3);
+		droneSound.play();
+	}
 }
 
 function loadModels() {
@@ -298,9 +296,8 @@ function main() {
 		listener = new THREE.AudioListener();
 		camera.add(listener);
 		sound = new THREE.Audio(listener);
-		audioLoader = new THREE.AudioLoader();
-
-	
+		droneSound = new THREE.Audio(listener);
+		audioLoader = new THREE.AudioLoader();	
 	}
 
 	//rain
