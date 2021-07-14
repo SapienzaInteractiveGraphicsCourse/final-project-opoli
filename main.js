@@ -664,34 +664,22 @@ function main() {
 		thirdPersonCamera.Update(dt, theta, phi);
 
 		hudBitmap.clearRect(0, 0, width, height);
-		hudBitmap.fillText(Math.round(1 / dt), 50, 50)
-		hudBitmap.fillText((acc.y + g).toFixed(2), 50, 100)
+		hudBitmap.fillText("FPS:" + Math.round(1 / dt), 100, 50)
+		hudBitmap.fillText((acc.y + g).toFixed(2), 100, 100)
 		hudTexture.needsUpdate = true;
 
 
-		//animazione pioggia
+		//rain
 		var positionAttribute = rain.geometry.getAttribute('position');
-
 		for (var i = 0; i < positionAttribute.count; i++) {
-
 			vertex.fromBufferAttribute(positionAttribute, i);
-
-
 			vertex.y -= 1;
-
 			if (vertex.y < - 200) {
 				vertex.y = 200;
 			}
-
 			positionAttribute.setXYZ(i, vertex.x, vertex.y, vertex.z);
-
 		}
-
 		positionAttribute.needsUpdate = true;
-
-
-
-
 
 		renderer.render(scene, camera);
 
