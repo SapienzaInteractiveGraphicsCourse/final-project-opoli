@@ -60,14 +60,9 @@ function loadSounds() {
 	}
 }
 
-<<<<<<< HEAD
-function playSoundTrack() {
-	if (sound.isPlaying) {
-=======
 function playSoundTrack(){
 	if(sound.isPlaying) {
 		document.getElementById("musicbutton").src = './menu/soundoff.png';
->>>>>>> 6471f94c09cf867b967324b2f2614dc57c9a51c5
 		sound.pause();
 		droneSound.pause();
 	} else {
