@@ -245,6 +245,7 @@ function main() {
 	const canvas = document.querySelector('#c');
 	renderer = new THREE.WebGL1Renderer({
 		canvas,
+		antialias: true
 		// logarithmicDepthBuffer: true
 	});
 	renderer.setPixelRatio(window.devicePixelRatio);
