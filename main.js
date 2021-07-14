@@ -239,7 +239,8 @@ class ThirdPersonCamera {
 }
 
 function main() {
-
+	document.getElementById("menu").style.display = 'block';
+	
 	let camera, scene, renderer, thirdPersonCamera, controls, rain, rainGeo, rainCount = 15000;
 	let radius, theta, phi;
 
