@@ -1,5 +1,6 @@
 import * as THREE from './three.js-master/build/three.module.js';
 import { GLTFLoader } from './three.js-master/examples/jsm/loaders/GLTFLoader.js';
+import { FBXLoader } from './three.js-master/examples/jsm/loaders/FBXLoader.js';
 import { OrbitControls } from './three.js-master/examples/jsm/controls/OrbitControls.js';
 import { PointerLockControls } from './three.js-master/examples/jsm/controls/PointerLockControls.js';
 import { MTLLoader } from './three.js-master/examples/jsm/loaders/MTLLoader.js';
@@ -14,13 +15,13 @@ var modelsLoaded = false;
 var soundsLoaded = false;
 
 const models = {
-	drone: { url: './models/drone.gltf' },
-	city: { url: './models/city.glb' }
+	drone: { url: './models/drone.gltf', loader: 'gltf' },
+	city: { url: './models/city.fbx', loader: 'fbx' }
 }
 
 
 const sounds = {
-	background: { url: './sounds/music.mp3'}
+	background: { url: './sounds/music.mp3' }
 }
 
 
@@ -45,8 +46,8 @@ function loadSounds() {
 	const soundsLoaderMngr = new THREE.LoadingManager();
 	soundsLoaderMngr.onLoad = () => {
 		soundsLoaded = true;
-	
-		if(modelsLoaded & soundsLoaded) {
+
+		if (modelsLoaded & soundsLoaded) {
 			main();
 		}
 	};
@@ -58,17 +59,17 @@ function loadSounds() {
 	{
 		const audioLoader = new THREE.AudioLoader(soundsLoaderMngr);
 		for (const sound of Object.values(sounds)) {
-			audioLoader.load( sound.url, function( buffer ) {
-				
+			audioLoader.load(sound.url, function (buffer) {
+
 				sound.sound = buffer;
 
 				console.log("Loaded ", buffer);
 			});
 		}
-	} 
+	}
 }
 
-function playSoundTrack(){
+function playSoundTrack() {
 	sound.isPlaying = false;
 	sound.setBuffer(sounds.background.sound);
 	sound.setLoop(true);
@@ -91,40 +92,53 @@ function loadModels() {
 		console.log("Loading the models... ", itemsLoaded / itemsTotal * 100, "%");
 		// document.getElementById("get_models_progress").innerHTML = `${itemsLoaded / itemsTotal * 100 | 0}%`;
 	};
+	// load gltf
 	{
 		const gltfLoader = new GLTFLoader(modelsLoadMngr);
+		const fbxLoader = new FBXLoader(modelsLoadMngr)
 		for (const model of Object.values(models)) {
 			console.log("Loading Model: ", model);
-			gltfLoader.load(model.url, (gltf) => {
-				const standardMaterial = new THREE.MeshPhongMaterial();
-				gltf.scene.traverse(function (child) {
-
-					if (child.isMesh) {
-						child.castShadow = true;
-						child.receiveShadow = true;
-						if (child.material.depthWrite == true) console.log(child.material)
-						child.material = new THREE.MeshStandardMaterial({
-							color: child.material.color,
-							emissive: child.material.emissive,
-							opacity: child.material.opacity,
-							transparent: child.material.transparent,
-							polygonOffset: child.material.polygonOffset,
-							refractionRatio: child.material.refractionRatio,
-							// metalness: child.material.metalness,
-							// roughness: child.material.roughness,
-							side: THREE.FrontSide,
-							fog:true
+			switch (model.loader) {
+				case 'fbx':
+					fbxLoader.load(model.url, fbx => {
+						fbx.traverse(child => {
+							if (child.isMesh) {
+								child.castShadow = true;
+								child.receiveShadow = true;
+								// if (child.material.specular != null) console.log(child.material)
+								// for (var i = 0; i < child.material.length; i++) {
+								// 	if (child.material[i].specular != 0)
+								// 	child.material.specular = {r:1.0, g: 1.0, b:1.0};
+								// 		console.log(child.material);
+								// }
+								// child.material = child.material[2] || child.material;
+								// if (child.material.depthWrite == true) console.log(child.material)
+							}
 						});
-						if (child.material.depthWrite == true) console.log(child.material)
-					}
 
-				});
+						model.obj = fbx;
+					});
+					break;
+				case 'gltf':
+					gltfLoader.load(model.url, (gltf) => {
+						gltf.scene.traverse(child => {
+							if (child.isMesh) {
+								child.castShadow = true;
+								child.receiveShadow = true;
+								// if (child.material.depthWrite == true) console.log(child.material)
+								// child.material.side = THREE.DoubleSide;
+								// if (child.material.depthWrite == true) console.log(child.material)
+							}
+						});
 
-				model.gltf = gltf.scene;
-			});
+						model.obj = gltf.scene;
+					});
+					break;
+			}
 		}
 	}
 }
+
 
 window.onload = () => {
 	loadModels();
@@ -298,31 +312,31 @@ function main() {
 		sound = new THREE.Audio(listener);
 		audioLoader = new THREE.AudioLoader();
 
-	
+
 	}
 
 	//rain
 	{
 
 		const points = [];
-		for(let i=0;i<rainCount;i++) {
+		for (let i = 0; i < rainCount; i++) {
 			let rainDrop = new THREE.Vector3(
-			  Math.random() * 400 -200,
-			  Math.random() * 500 - 250,
-			  Math.random() * 400 - 200
+				Math.random() * 400 - 200,
+				Math.random() * 500 - 250,
+				Math.random() * 400 - 200
 			);
 			rainDrop.velocity = {};
 			rainDrop.velocity = 0;
 			points.push(rainDrop);
 		}
-		rainGeo = new THREE.BufferGeometry().setFromPoints( points );
-        let rainMaterial = new THREE.PointsMaterial({
-        color: 0xaaaaaa,
-        size: 0.1,
-        transparent: true
-        });
-        rain = new THREE.Points(rainGeo,rainMaterial);
-        scene.add(rain);
+		rainGeo = new THREE.BufferGeometry().setFromPoints(points);
+		let rainMaterial = new THREE.PointsMaterial({
+			color: 0xaaaaaa,
+			size: 0.1,
+			transparent: true
+		});
+		rain = new THREE.Points(rainGeo, rainMaterial);
+		scene.add(rain);
 	}
 
 	// plane
@@ -360,10 +374,10 @@ function main() {
 		drone.mesh = new THREE.Object3D();
 		drone.mesh.name = "Drone";
 
-		drone.mesh.add(models.drone.gltf.getObjectByName('body'));
+		drone.mesh.add(models.drone.obj.getObjectByName('body'));
 		drone.mesh.scale.set(0.01, 0.01, 0.01)
 		drone.positionFrame = new THREE.Mesh();
-		// drone.positionFrame.position.set(-34.64, 0.5, -37.50);
+		// drone.positionFrame.position.set(2.9802289996865827, 9.867894072051383, -14.220647606355177);
 		drone.rotationFrame = new THREE.Mesh();
 		drone.rotationFrame.add(new THREE.AxesHelper(15))
 		scene.add(drone.positionFrame);
@@ -457,7 +471,7 @@ function main() {
 			document.addEventListener('keydown', function (event) {
 				let key = event.key.toLowerCase();
 				if (key === "h") console.log(drone.positionFrame.position)
-				if(key === 'u') {
+				if (key === 'u') {
 					playSoundTrack();
 				}
 				if ("wsadqe< ".indexOf(key) == -1) return;
@@ -520,9 +534,9 @@ function main() {
 		city.mesh = new THREE.Object3D();
 		city.mesh.name = "City";
 
-		city.mesh.add(models.city.gltf.getObjectByName('Model1'));
+		city.mesh.add(models.city.obj.getObjectByName('Model'));
 		console.log(city.mesh);
-		city.mesh.position.set(34.64*2, -0.5*2, 37.50*2);
+		city.mesh.position.set(34.64 * 2, -0.5 * 2, 37.50 * 2);
 		city.mesh.scale.set(2, 2, 2);
 		scene.add(city.mesh);
 	}
@@ -539,7 +553,7 @@ function main() {
 		light.shadow.camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 1, 20);
 		light.shadow.mapSize.width = 4096;
 		light.shadow.mapSize.height = 4096;
-		light.shadow.bias = -0.004;
+		light.shadow.bias = -0.001;
 		// console.log(light.shadow.camera)
 		drone.positionFrame.add(light);
 		drone.positionFrame.add(light.target);
@@ -656,24 +670,24 @@ function main() {
 
 
 		//animazione pioggia
-		var positionAttribute = rain.geometry.getAttribute( 'position' );
-	
-    	for ( var i = 0; i < positionAttribute.count; i ++ ) {
-	
-        	vertex.fromBufferAttribute( positionAttribute, i );
-			
+		var positionAttribute = rain.geometry.getAttribute('position');
 
-        	vertex.y -= 1;
-		
-        	if (vertex.y < - 200) {
-            	vertex.y = 200;
-        	}
-		
-        	positionAttribute.setXYZ( i, vertex.x, vertex.y, vertex.z );
-	
-    	}
+		for (var i = 0; i < positionAttribute.count; i++) {
 
-    	positionAttribute.needsUpdate = true;
+			vertex.fromBufferAttribute(positionAttribute, i);
+
+
+			vertex.y -= 1;
+
+			if (vertex.y < - 200) {
+				vertex.y = 200;
+			}
+
+			positionAttribute.setXYZ(i, vertex.x, vertex.y, vertex.z);
+
+		}
+
+		positionAttribute.needsUpdate = true;
 
 
 
