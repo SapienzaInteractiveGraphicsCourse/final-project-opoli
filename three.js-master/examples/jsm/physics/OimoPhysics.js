@@ -192,7 +192,8 @@ async function OimoPhysics() {
 
 	return {
 		addMesh: addMesh,
-		setMeshPosition: setMeshPosition
+		setMeshPosition: setMeshPosition,
+		world: world
 		// addCompoundMesh
 	};
 

@@ -5,7 +5,8 @@ import { OrbitControls } from './three.js-master/examples/jsm/controls/OrbitCont
 import { PointerLockControls } from './three.js-master/examples/jsm/controls/PointerLockControls.js';
 import { MTLLoader } from './three.js-master/examples/jsm/loaders/MTLLoader.js';
 import TWEEN, { Easing, Tween } from './libs/tween.esm.js';
-import {OimoPhysics} from './three.js-master/examples/jsm/physics/OimoPhysics.js';
+import { OimoPhysics } from './three.js-master/examples/jsm/physics/OimoPhysics.js';
+import * as OIMO from './three.js-master/examples/jsm/libs/OimoPhysics/index.js'
 
 function onProgress(xhr) {
 	console.log((xhr.loaded / xhr.total * 100) + '% loaded');
@@ -23,8 +24,8 @@ const models = {
 
 
 const sounds = {
-	background: { url: './sounds/music.mp3'},
-	drone: { url: './sounds/drone.mp3'},
+	background: { url: './sounds/music.mp3' },
+	drone: { url: './sounds/drone.mp3' },
 }
 
 const vertex = new THREE.Vector3();
@@ -59,8 +60,8 @@ function loadSounds() {
 	}
 }
 
-function playSoundTrack(){
-	if(sound.isPlaying) {
+function playSoundTrack() {
+	if (sound.isPlaying) {
 		sound.pause();
 		droneSound.pause();
 	} else {
@@ -234,10 +235,12 @@ class ThirdPersonCamera {
 	}
 }
 
-function main() {
+async function main() {
 
 	let camera, scene, renderer, thirdPersonCamera, controls, rain, rainGeo, rainCount = 15000;
 	let radius, theta, phi;
+	let physics = await OimoPhysics();
+	physics.world.setGravity(new OIMO.Vec3( 0, - 0.5, 0 ));
 
 	var width = window.innerWidth;
 	var height = window.innerHeight;
@@ -257,7 +260,7 @@ function main() {
 
 	// creating scene
 	scene = new THREE.Scene();
-	scene.background = new THREE.Color( 0x87ceeb );
+	scene.background = new THREE.Color(0x87ceeb);
 
 	// camera
 	{
@@ -313,7 +316,7 @@ function main() {
 		camera.add(listener);
 		sound = new THREE.Audio(listener);
 		droneSound = new THREE.Audio(listener);
-		audioLoader = new THREE.AudioLoader();	
+		audioLoader = new THREE.AudioLoader();
 	}
 
 	//rain
@@ -341,27 +344,8 @@ function main() {
 	}
 
 	// plane
-	// {
-	// 	const planeSize = 400;
-
-	// 	const loader = new THREE.TextureLoader();
-	// 	const texture = loader.load('./textures/checker.png');
-	// 	texture.wrapS = THREE.RepeatWrapping;
-	// 	texture.wrapT = THREE.RepeatWrapping;
-	// 	texture.magFilter = THREE.NearestFilter;
-	// 	const repeats = planeSize / 20;
-	// 	texture.repeat.set(repeats, repeats);
-
-	// 	const planeGeo = new THREE.PlaneGeometry(planeSize, planeSize);
-	// 	const planeMat = new THREE.MeshPhongMaterial({
-	// 		map: texture,
-	// 		side: THREE.DoubleSide,
-	// 	});
-	// 	const mesh = new THREE.Mesh(planeGeo, planeMat);
-	// 	mesh.rotation.x = Math.PI * -.5;
-	// 	mesh.receiveShadow = true;
-	// 	scene.add(mesh);
-	// }
+	{
+	}
 	// sky
 	{
 		const skyColor = 0xB1E1FF;  // light blue
@@ -377,11 +361,14 @@ function main() {
 
 		drone.mesh.add(models.drone.obj.getObjectByName('body'));
 		drone.mesh.scale.set(0.01, 0.01, 0.01)
-		drone.positionFrame = new THREE.Mesh();
+		drone.positionFrame = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.066, 0.2));
+		drone.positionFrame.material.visible = false;
 		// drone.positionFrame.position.set(2.9802289996865827, 9.867894072051383, -14.220647606355177);
 		drone.rotationFrame = new THREE.Mesh();
 		drone.rotationFrame.add(new THREE.AxesHelper(15))
 		scene.add(drone.positionFrame);
+		console.log(drone.positionFrame);
+		physics.addMesh(drone.positionFrame, 1);
 		drone.positionFrame.add(drone.rotationFrame)
 		drone.rotationFrame.add(drone.mesh);
 		drone.mesh.traverse(o => {
@@ -529,6 +516,14 @@ function main() {
 			});
 		}
 	}
+	const floor = new THREE.Mesh(
+		new THREE.BoxGeometry(200, 0.5, 200)
+	);
+	floor.material.visible = false;
+	floor.position.y = -0.4;
+	floor.receiveShadow = true;
+	scene.add(floor);
+	physics.addMesh(floor);
 	initDrone();
 
 	function initCity() {
@@ -540,6 +535,25 @@ function main() {
 		city.mesh.position.set(34.64 * 2, -0.5 * 2, 37.50 * 2);
 		city.mesh.scale.set(2, 2, 2);
 		scene.add(city.mesh);
+		city.mesh.traverse(o => {
+			if (o.isMesh) {
+				var bbox = new THREE.Box3().setFromObject(o);
+				console.log(bbox);
+
+				var hitbox = new THREE.Mesh(new THREE.BoxGeometry(bbox.max.x-bbox.min.x,bbox.max.y-bbox.min.y,bbox.max.z-bbox.min.z));
+				hitbox.position.x = bbox.max.x
+				hitbox.position.y = bbox.max.y;
+				hitbox.position.z = bbox.max.z;
+				// hitbox.position.x = (bbox.min.x+bbox.max.x)/2;
+				// hitbox.position.y = (bbox.min.y+bbox.max.y)/2;
+				// hitbox.position.z = (bbox.min.z+bbox.max.z)/2;
+				hitbox.material.color = new THREE.Color(0xff00000);
+				scene.add(hitbox);
+				physics.addMesh(hitbox);
+				console.log(o);
+			}
+			
+		})
 	}
 	initCity();
 
@@ -681,6 +695,8 @@ function main() {
 			positionAttribute.setXYZ(i, vertex.x, vertex.y, vertex.z);
 		}
 		positionAttribute.needsUpdate = true;
+
+		physics.setMeshPosition(drone.positionFrame, drone.positionFrame.position);
 
 		renderer.render(scene, camera);
 
