@@ -257,6 +257,7 @@ function main() {
 
 	// creating scene
 	scene = new THREE.Scene();
+	scene.background = new THREE.Color( 0x87ceeb );
 
 	// camera
 	{
