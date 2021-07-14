@@ -61,9 +61,11 @@ function loadSounds() {
 
 function playSoundTrack(){
 	if(sound.isPlaying) {
+		document.getElementById("musicbutton").src = './menu/soundoff.png';
 		sound.pause();
 		droneSound.pause();
 	} else {
+		document.getElementById("musicbutton").src = './menu/soundin.png';
 		sound.isPlaying = false;
 		sound.setBuffer(sounds.background.sound);
 		sound.setLoop(true);
@@ -76,6 +78,7 @@ function playSoundTrack(){
 		droneSound.play();
 	}
 }
+
 
 function loadModels() {
 	const modelsLoadMngr = new THREE.LoadingManager();
@@ -143,6 +146,7 @@ function loadModels() {
 window.onload = () => {
 	loadModels();
 	loadSounds();
+	document.getElementById("musicbutton").addEventListener("click", playSoundTrack);
 }
 
 var drone = {
@@ -340,28 +344,6 @@ function main() {
 		scene.add(rain);
 	}
 
-	// plane
-	// {
-	// 	const planeSize = 400;
-
-	// 	const loader = new THREE.TextureLoader();
-	// 	const texture = loader.load('./textures/checker.png');
-	// 	texture.wrapS = THREE.RepeatWrapping;
-	// 	texture.wrapT = THREE.RepeatWrapping;
-	// 	texture.magFilter = THREE.NearestFilter;
-	// 	const repeats = planeSize / 20;
-	// 	texture.repeat.set(repeats, repeats);
-
-	// 	const planeGeo = new THREE.PlaneGeometry(planeSize, planeSize);
-	// 	const planeMat = new THREE.MeshPhongMaterial({
-	// 		map: texture,
-	// 		side: THREE.DoubleSide,
-	// 	});
-	// 	const mesh = new THREE.Mesh(planeGeo, planeMat);
-	// 	mesh.rotation.x = Math.PI * -.5;
-	// 	mesh.receiveShadow = true;
-	// 	scene.add(mesh);
-	// }
 	// sky
 	{
 		const skyColor = 0xB1E1FF;  // light blue
