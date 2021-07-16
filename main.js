@@ -1,4 +1,4 @@
-import * as THREE from './three.js-master/build/three.module.js';
+// import * as THREE from './three.js-master/build/three.module.js';
 import { GLTFLoader } from './three.js-master/examples/jsm/loaders/GLTFLoader.js';
 import { FBXLoader } from './three.js-master/examples/jsm/loaders/FBXLoader.js';
 import { OrbitControls } from './three.js-master/examples/jsm/controls/OrbitControls.js';
@@ -6,7 +6,20 @@ import { PointerLockControls } from './three.js-master/examples/jsm/controls/Poi
 import { MTLLoader } from './three.js-master/examples/jsm/loaders/MTLLoader.js';
 import TWEEN, { Easing, Tween } from './libs/tween.esm.js';
 import { OimoPhysics } from './three.js-master/examples/jsm/physics/OimoPhysics.js';
-import * as OIMO from './three.js-master/examples/jsm/libs/OimoPhysics/index.js'
+import * as OIMO from './three.js-master/examples/jsm/libs/OimoPhysics/index.js';
+
+const {
+	Project,
+	PhysicsLoader,
+	Scene3D,
+	ExtendedObject3D,
+	THREE,
+	JoyStick,
+	ThirdPersonControls,
+	PointerLock,
+	PointerDrag
+} = ENABLE3D
+
 
 function onProgress(xhr) {
 	console.log((xhr.loaded / xhr.total * 100) + '% loaded');
@@ -60,8 +73,8 @@ function loadSounds() {
 	}
 }
 
-function playSoundTrack(){
-	if(sound.isPlaying) {
+function playSoundTrack() {
+	if (sound.isPlaying) {
 		document.getElementById("musicbutton").src = './menu/soundoff.png';
 		sound.pause();
 		droneSound.pause();
@@ -145,9 +158,11 @@ function loadModels() {
 
 
 window.onload = () => {
-	loadModels();
-	loadSounds();
-	document.getElementById("musicbutton").addEventListener("click", playSoundTrack);
+	PhysicsLoader('./libs/ammo', () => {
+		loadModels();
+		loadSounds();
+		document.getElementById("musicbutton").addEventListener("click", playSoundTrack);
+	});
 }
 
 var drone = {
@@ -240,13 +255,12 @@ class ThirdPersonCamera {
 }
 
 
-async function main() {
+function main() {
 	document.getElementById("menu").style.display = 'block';
-	
+
 	let camera, scene, renderer, thirdPersonCamera, controls, rain, rainGeo, rainCount = 15000;
 	let radius, theta, phi;
-	let physics = await OimoPhysics();
-	physics.world.setGravity(new OIMO.Vec3( 0, - 0.5, 0 ));
+
 
 	var width = window.innerWidth;
 	var height = window.innerHeight;
@@ -267,6 +281,14 @@ async function main() {
 	// creating scene
 	scene = new THREE.Scene();
 	scene.background = new THREE.Color(0x87ceeb);
+
+	// physics
+	const physics = new AmmoPhysics(scene)
+	physics.debug?.enable()
+
+	// extract the object factory from physics
+	// the factory will make/add object without physics
+	const { factory } = physics
 
 	// camera
 	{
@@ -534,29 +556,35 @@ async function main() {
 		city.mesh.name = "City";
 
 		city.mesh.add(models.city.obj.getObjectByName('Model'));
-		console.log(city.mesh);
-		city.mesh.position.set(34.64 * 2, -0.5 * 2, 37.50 * 2);
+		city.mesh.position.set(69, -1, 75);
 		city.mesh.scale.set(2, 2, 2);
 		scene.add(city.mesh);
 		city.mesh.traverse(o => {
 			if (o.isMesh) {
 				var bbox = new THREE.Box3().setFromObject(o);
-				console.log(bbox);
+				// var geom = new Geometry()
+				// var hitbox = new THREE.Mesh(geom.fromBufferGeometry(o.geometry));
+				var hitbox_visual = new THREE.Mesh(o.geometry);
+				// hitbox.geometry.attributes = o.geometry.attributes;
+				var hitbox_2 = new THREE.Mesh(new THREE.BoxGeometry(bbox.max.x - bbox.min.x, bbox.max.y - bbox.min.y, bbox.max.z - bbox.min.z));
+				// hitbox.scale.set(2, 2, 2);
+				// hitbox.position.set(69/2, -1/2, 75/2);
+				hitbox_visual.scale.set(2, 2, 2);
+				hitbox_visual.position.set(69 / 2, -1 / 2, 75 / 2);
+				new OIMO.RigidBody()
 
-				var hitbox = new THREE.Mesh(new THREE.BoxGeometry(bbox.max.x-bbox.min.x,bbox.max.y-bbox.min.y,bbox.max.z-bbox.min.z));
-				hitbox.position.x = bbox.max.x
-				hitbox.position.y = bbox.max.y;
-				hitbox.position.z = bbox.max.z;
 				// hitbox.position.x = (bbox.min.x+bbox.max.x)/2;
 				// hitbox.position.y = (bbox.min.y+bbox.max.y)/2;
 				// hitbox.position.z = (bbox.min.z+bbox.max.z)/2;
-				hitbox.material.color = new THREE.Color(0xff00000);
-				scene.add(hitbox);
-				physics.addMesh(hitbox);
-				console.log(o);
+				hitbox_visual.material.color = new THREE.Color(0xff00000);
+				scene.add(hitbox_visual);
+				// physics.addMesh(hitbox);
 			}
-			
 		})
+		// console.log(physics);
+		scene.add(new THREE.Mesh(new THREE.BufferGeometry()))
+		console.log(new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1)))
+		// physics.addMesh(new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1)));
 	}
 	initCity();
 
@@ -635,6 +663,11 @@ async function main() {
 		time *= 0.001;
 		const dt = time - oldtime;
 		oldtime = time;
+
+		// update physics
+		physics.update(clock.getDelta() * 1000)
+		// update the physics debugger
+		physics.updateDebugger()
 
 		const max_rps = 250 * (2 * Math.PI);
 
