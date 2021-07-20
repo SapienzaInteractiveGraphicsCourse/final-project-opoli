@@ -366,6 +366,7 @@ async function main() {
 		drone.mesh.scale.set(0.01, 0.01, 0.01)
 		drone.positionFrame = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.066, 0.2));
 		drone.positionFrame.material.visible = false;
+		drone.positionFrame.position.set(-34.64, 0.5, -37.50);
 		// drone.positionFrame.position.set(2.9802289996865827, 9.867894072051383, -14.220647606355177);
 		drone.rotationFrame = new THREE.Mesh();
 		drone.rotationFrame.add(new THREE.AxesHelper(15))
@@ -535,28 +536,25 @@ async function main() {
 
 		city.mesh.add(models.city.obj.getObjectByName('Model'));
 		console.log(city.mesh);
-		city.mesh.position.set(34.64 * 2, -0.5 * 2, 37.50 * 2);
-		city.mesh.scale.set(2, 2, 2);
+		// city.mesh.position.set(34.64 * 2, -0.5 * 2, 37.50 * 2);
+		// city.mesh.scale.set(2, 2, 2);
 		scene.add(city.mesh);
 		city.mesh.traverse(o => {
 			if (o.isMesh) {
-				var bbox = new THREE.Box3().setFromObject(o);
-				console.log(bbox);
+				console.log(o);
 
-				var hitbox = new THREE.Mesh(new THREE.BoxGeometry(bbox.max.x-bbox.min.x,bbox.max.y-bbox.min.y,bbox.max.z-bbox.min.z));
-				hitbox.position.x = bbox.max.x
-				hitbox.position.y = bbox.max.y;
-				hitbox.position.z = bbox.max.z;
+				var hitbox = new THREE.Mesh(o.geometry);
+				// hitbox.position.set(o.position)
 				// hitbox.position.x = (bbox.min.x+bbox.max.x)/2;
 				// hitbox.position.y = (bbox.min.y+bbox.max.y)/2;
 				// hitbox.position.z = (bbox.min.z+bbox.max.z)/2;
 				hitbox.material.color = new THREE.Color(0xff00000);
-				scene.add(hitbox);
+				// scene.add(hitbox);
 				physics.addMesh(hitbox);
-				console.log(o);
 			}
 			
 		})
+		console.log(physics);
 	}
 	initCity();
 
