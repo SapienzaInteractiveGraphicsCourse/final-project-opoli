@@ -171,7 +171,9 @@ class MainScene extends Scene3D {
 	}
 
 	speed = new Vector3(0, 0, 0);
-	ang = new Vector3(0, 0, 0);
+	ang = new Vector3(-Math.PI, 0, -Math.PI);
+	acc = new Vector3(0, 0 , 0);
+
 	applyTweens(key) {
 		inputs[key] = true;
 		if (inputs.w) tweens.w = [
@@ -179,36 +181,56 @@ class MainScene extends Scene3D {
 				this.drone.body.setVelocity(this.speed.x, this.speed.y, this.speed.z);
 				// this.drone.body.needUpdate = true;
 			}),
-			new TWEEN.Tween(this.ang).to({ x: 0.2 }, transition).start().easing(ease_func).onUpdate(() => {
-				this.drone.body.setAngularVelocity(0.2-this.ang.x,0,0);
+			new TWEEN.Tween(this.ang).to({ x: Math.PI/2 }, transition).start().easing(ease_func).onUpdate(() => {
+				this.drone.rotation.setFromVector3(this.ang);
+				//this.drone.body.setAngularVelocity(0.2-this.ang.x,0,0);
 				this.drone.body.needUpdate = true;
+				//console.log(this.ang);
 			})
 		];
 		if (inputs.s) tweens.s = [
-			new TWEEN.Tween(this.speed).to({ x: -1 }, transition_s).start().easing(ease_func_speed),
-			new TWEEN.Tween(this.drone.rotation).to({ x: -0.2 }, transition).start().easing(ease_func)
+			new TWEEN.Tween(this.speed).to({ x: -1 }, transition_s).start().easing(ease_func_speed).onUpdate(() => {
+				this.drone.body.setVelocity(this.speed.x, this.speed.y, this.speed.z);
+				// this.drone.body.needUpdate = true;
+			}),
+			new TWEEN.Tween(this.ang).to({ x: -0.2 }, transition).start().easing(ease_func).onUpdate(() => {
+				//this.drone.body.setAngularVelocity(0.2-this.ang.x,0,0);
+				//this.drone.body.needUpdate = true;
+			})
 		];
 		if (inputs.d) tweens.d = [
-			new TWEEN.Tween(this.speed).to({ z: 1 }, transition_s).start().easing(ease_func_speed),
-			new TWEEN.Tween(this.drone.rotation).to({ z: 0.2 }, transition).start().easing(ease_func)
+			new TWEEN.Tween(this.speed).to({ z: 1 }, transition_s).start().easing(ease_func_speed).onUpdate(() => {
+				this.drone.body.setVelocity(this.speed.x, this.speed.y, this.speed.z);
+				// this.drone.body.needUpdate = true;
+			}),
+			new TWEEN.Tween(this.ang).to({ z: 0.2 }, transition).start().easing(ease_func).onUpdate(() => {
+				//this.drone.body.setAngularVelocity(0.2-this.ang.z,0,0);
+				//this.drone.body.needUpdate = true;
+			})
 		];
 		if (inputs.a) tweens.a = [
-			new TWEEN.Tween(this.speed).to({ z: -1 }, transition_s).start().easing(ease_func_speed),
-			new TWEEN.Tween(this.drone.rotation).to({ z: -0.2 }, transition).start().easing(ease_func)
+			new TWEEN.Tween(this.speed).to({ z: -1 }, transition_s).start().easing(ease_func_speed).onUpdate(() => {
+				this.drone.body.setVelocity(this.speed.x, this.speed.y, this.speed.z);
+				// this.drone.body.needUpdate = true;
+			}),
+			new TWEEN.Tween(this.ang).to({ z: -0.2 }, transition).start().easing(ease_func).onUpdate(() => {
+				//this.drone.body.setAngularVelocity(0.2-this.ang.z,0,0);
+				//this.drone.body.needUpdate = true;
+			})
 		];
-		if (inputs.e) tweens.e = new TWEEN.Tween(this.drone.body.angularVelocity).to({ y: -Math.PI }, time_yaw).start().easing(ease_func_up);
-		if (inputs.q) tweens.q = new TWEEN.Tween(this.drone.body.angularVelocity).to({ y: Math.PI }, time_yaw).start().easing(ease_func_up);
+		if (inputs.e) tweens.e = new TWEEN.Tween(this.ang).to({ y: -Math.PI }, time_yaw).start().easing(ease_func_up);
+		if (inputs.q) tweens.q = new TWEEN.Tween(this.ang).to({ y: Math.PI }, time_yaw).start().easing(ease_func_up);
 		if (throttle_control) return;
-		if (inputs[" "] && acc.y < 12 && !tweens[" "]) {
-			tweens[" "] = new TWEEN.Tween(this.drone.body.velocity).to({ y: '+1.2' }, time_up).start().easing(ease_func_up).onUpdate(() => {
-				if (acc.y < 12) return;
+		if (inputs[" "] && this.acc.y < 12 && !tweens[" "]) {
+			tweens[" "] = new TWEEN.Tween(this.speed).to({ y: '+1.2' }, time_up).start().easing(ease_func_up).onUpdate(() => {
+				if (this.acc.y < 12) return;
 				tweens[" "].stop();
 				tweens[" "] = null;
 			});
 		}
-		if (inputs["<"] && acc.y > 0 && !tweens["<"]) {
-			tweens["<"] = new TWEEN.Tween(this.drone.body.velocity).to({ y: '-1.2' }, time_up).start().easing(ease_func_up).onUpdate(() => {
-				if (acc.y > 0) return;
+		if (inputs["<"] && this.acc.y > 0 && !tweens["<"]) {
+			tweens["<"] = new TWEEN.Tween(this.speed).to({ y: '-1.2' }, time_up).start().easing(ease_func_up).onUpdate(() => {
+				if (this.acc.y > 0) return;
 				tweens["<"].stop();
 				tweens["<"] = null;
 			});
@@ -264,7 +286,7 @@ class MainScene extends Scene3D {
 			this.drone.name = 'drone'
 			this.drone.rotateY(Math.PI + 0.1) // a hack
 			this.drone.add(drone)
-			this.drone.position.set(35, 1, 0)
+			this.drone.position.set(35, 3, 0)
 			// add shadow
 			this.drone.traverse(child => {
 				if (child.isMesh) {
