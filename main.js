@@ -840,6 +840,7 @@ function main() {
 		drone.mesh.scale.set(0.01, 0.01, 0.01)
 		drone.positionFrame = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.066, 0.2));
 		drone.positionFrame.material.visible = false;
+		drone.positionFrame.position.set(-34.64, 0.5, -37.50);
 		// drone.positionFrame.position.set(2.9802289996865827, 9.867894072051383, -14.220647606355177);
 		drone.rotationFrame = new THREE.Mesh();
 		drone.rotationFrame.add(new THREE.AxesHelper(15))
