@@ -180,10 +180,11 @@ class MainScene extends Scene3D {
 			new TWEEN.Tween(this.speed).to({ x: 10 }, transition_s).start().easing(ease_func_speed).onUpdate(() => {
 				this.drone.body.setCollisionFlags(0);
 				this.drone.body.setVelocity(this.speed.x, this.speed.y, this.speed.z);
-				this.drone.body.needUpdate = true;
+				//this.drone.body.needUpdate = true;
 			}),
 			new TWEEN.Tween(this.ang).to({ x: 0.2 }, transition).start().easing(ease_func).onUpdate(() => {
 				this.drone.body.setCollisionFlags(2);
+				this.drone.position.x += 0.1;
 				this.drone.rotation.setFromVector3(this.ang);
 				this.drone.body.needUpdate = true;
 			})
