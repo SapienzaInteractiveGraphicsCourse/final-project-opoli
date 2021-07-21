@@ -160,6 +160,11 @@ class MainScene extends Scene3D {
 			})
 
 		}
+
+		// this.physics.collisionEvents.on('collision', data => {
+		// 	const { bodies, event } = data
+		// 	console.log(bodies[0].name, bodies[1].name, event)
+		// })
 	}
 
 	async preload() {
@@ -174,7 +179,7 @@ class MainScene extends Scene3D {
 	ang = new Vector3(0, 0, 0);
 	acc = new Vector3(0, 0, 0);
 	ang_speed = new Vector3(0, 0, 0);
-	checkQuadrant = true;
+	freefall = false;
 
 	applyTweens(key) {
 		inputs[key] = true;
@@ -197,16 +202,16 @@ class MainScene extends Scene3D {
 		if (inputs.e) tweens.e = new TWEEN.Tween(this.ang_speed).to({ y: -Math.PI }, time_yaw).start().easing(ease_func_up)
 		if (inputs.q) tweens.q = new TWEEN.Tween(this.ang_speed).to({ y: Math.PI }, time_yaw).start().easing(ease_func_up)
 		if (throttle_control) return;
-		if (inputs[" "] && this.speed.y < 10 && !tweens[" "]) {
+		if (inputs[" "] && this.speed.y < 20 && !tweens[" "]) {
 			tweens[" "] = new TWEEN.Tween(this.speed).to({ y: '+10' }, time_up).start().easing(ease_func_up).onUpdate(() => {
-				if (this.speed.y < 10) return;
+				if (this.speed.y < 20) return;
 				tweens[" "].stop();
 				tweens[" "] = null;
 			});
 		}
-		if (inputs["<"] && this.speed.y > -10 && !tweens["<"]) {
+		if (inputs["<"] && this.speed.y > 0 && !tweens["<"]) {
 			tweens["<"] = new TWEEN.Tween(this.speed).to({ y: '-10' }, time_up).start().easing(ease_func_up).onUpdate(() => {
-				if (this.acc.y > -10) return;
+				if (this.speed.y > 0) return;
 				tweens["<"].stop();
 				tweens["<"] = null;
 			});
@@ -278,7 +283,24 @@ class MainScene extends Scene3D {
 			 * Add the player to the scene with a body
 			 */
 			this.add.existing(this.drone)
-			this.physics.add.existing(this.drone)
+			this.physics.add.existing(this.drone, {
+				shape: 'hull',
+				mass: 1
+			})
+
+			this.drone.body.checkCollisions = true;
+
+			this.drone.body.on.collision((otherObj, event) => {
+				if (otherObj.name === "coin") {
+
+				} else if (new Vector3(this.drone.body.velocity.x, this.drone.body.velocity.y, this.drone.body.velocity.z).length() > 5) {
+					this.freefall = true;
+					this.drone.body.setAngularFactor(1, 1, 1)
+					this.drone.body.setGravity(0,-9.81,0)
+					console.log('il drone è diventato matteo germano')
+				}
+			})
+
 
 			this.drone.body.setFriction(0.8)
 			this.drone.body.setAngularFactor(0, 0, 0)
@@ -290,6 +312,7 @@ class MainScene extends Scene3D {
 			var context = this;
 			// event listeners
 			document.addEventListener('keydown', function (event) {
+				if (context.freefall) return;
 				let key = event.key.toLowerCase();
 				if (key === "h") console.log(context.drone.position)
 				if (key === 'u') {
@@ -307,6 +330,7 @@ class MainScene extends Scene3D {
 			});
 
 			document.addEventListener('keyup', function (event) {
+				if (context.freefall) return;
 				let key = event.key.toLowerCase();
 				if ("wsadqe< ".indexOf(key) == -1) return;
 				inputs[key] = false;
@@ -359,7 +383,9 @@ class MainScene extends Scene3D {
 	}
 
 	old_ang = new Vector3(0, 0, 0);
-	oldTime = 0
+	old_speed_y = 0;
+	oldTime = -0.007;
+	control = -9.81;
 	update(time) {
 		const delta = time - this.oldTime
 		this.oldTime = time;
@@ -368,9 +394,14 @@ class MainScene extends Scene3D {
 
 			this.ang.y += this.ang_speed.y * delta;
 
-			const d_ang = new Vector3(this.ang.x - this.old_ang.x, this.ang.y - this.old_ang.y, this.ang.z - this.old_ang.z)
-
+			var d_ang = new Vector3(this.ang.x - this.old_ang.x, this.ang.y - this.old_ang.y, this.ang.z - this.old_ang.z)
+			const d_speed_y = this.speed.y - this.old_speed_y;
+			if (this.freefall) {
+				d_ang = new Vector3(0,0,0);
+				this.speed = new Vector3(0,0,0);
+			}
 			this.drone.body.setAngularVelocityY(d_ang.y / delta);
+
 
 			let cos_rot_y, sin_rot_y;
 			cos_rot_y = Math.cos(this.ang.y)
@@ -378,9 +409,16 @@ class MainScene extends Scene3D {
 			this.drone.body.setAngularVelocityX(cos_rot_y * d_ang.x / delta + sin_rot_y * d_ang.z / delta);
 			this.drone.body.setAngularVelocityZ(cos_rot_y * d_ang.z / delta - sin_rot_y * d_ang.x / delta);
 
-			this.drone.body.setVelocity(cos_rot_y * this.speed.x + sin_rot_y * this.speed.z, this.speed.y, cos_rot_y * this.speed.z - sin_rot_y * this.speed.x);
+			this.drone.body.setVelocityX(cos_rot_y * this.speed.x + sin_rot_y * this.speed.z);
+			this.drone.body.setVelocityZ(cos_rot_y * this.speed.z - sin_rot_y * this.speed.x);
+			if (this.speed.y > 8) this.control = d_speed_y / delta;
+			else this.control = -9.81 + this.speed.y
+			if (!this.freefall) this.drone.body.setGravity(0, this.control, 0)
+			console.log(this.control);
+
 			this.drone.body.needUpdate = true;
-			this.old_ang.set(this.ang.x, this.ang.y, this.ang.z)
+			this.old_ang.set(this.ang.x, this.ang.y, this.ang.z);
+			this.old_speed_y = this.speed.y;
 
 			TWEEN.update();
 		}
@@ -388,8 +426,8 @@ class MainScene extends Scene3D {
 }
 
 window.addEventListener('load', () => {
-	PhysicsLoader('./libs/ammo', () => {
-		const project = new Project({ antialias: true, maxSubSteps: 10, fixedTimeStep: 1 / 120, scenes: [MainScene], gravity: { x: 0, y: -10, z: 0 } })
+	PhysicsLoader('./libs/ammo_new', () => {
+		const project = new Project({ antialias: true, maxSubSteps: 10, fixedTimeStep: 1 / 120, scenes: [MainScene] })
 
 		const destination = document.getElementById('drone')
 		destination.appendChild(project.canvas)
