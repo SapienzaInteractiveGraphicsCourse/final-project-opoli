@@ -485,13 +485,26 @@ class MainScene extends Scene3D {
 					 ],
 					
 				  };
-				  var target = document.getElementById('gauge'); 
-				  var gauge = new Gauge(target).setOptions(opts); 
-				  
-				  gauge.maxValue = 3000; 
-				  gauge.setMinValue(0);  
-				  gauge.animationSpeed = 32;
-				  this.gauge = gauge;
+				var target = document.getElementById('gauge'); 
+				var gauge = new Gauge(target).setOptions(opts); 
+				
+				gauge.maxValue = 3000; 
+				gauge.setMinValue(0);  
+				gauge.animationSpeed = 32;
+				this.gauge = gauge;
+
+
+
+				new Noty({
+					type: 'success',
+					layout: 'topRight',
+					theme: 'nest',
+					text: 'Hello, just testing! 🤖',
+					timeout: '3000',
+					progressBar: true,
+					closeWith: ['click'],
+					killer: true,
+				}).show();
 			}
 			this.gameStarted = true;
 
