@@ -531,7 +531,7 @@ class MainScene extends Scene3D {
 
 			TWEEN.update();
 
-			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta);
+			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Flight Time: "+  Math.round(time) + "s";
 		}
 	}
 }
