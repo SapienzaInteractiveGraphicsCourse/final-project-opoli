@@ -336,7 +336,7 @@ class MainScene extends Scene3D {
 			this.drone.name = 'drone'
 			// this.drone.rotateY(Math.PI + 0.1) // a hack
 			this.drone.add(drone)
-			this.drone.add(new AxesHelper(5));
+			//this.drone.add(new AxesHelper(5));
 			this.drone.position.set(35, 1, 0)
 			// add shadow
 			this.drone.traverse(child => {
