@@ -389,7 +389,7 @@ class MainScene extends Scene3D {
 
 window.addEventListener('load', () => {
 	PhysicsLoader('./libs/ammo', () => {
-		const project = new Project({ antialias: true, maxSubSteps: 10, fixedTimeStep: 1 / 120, scenes: [MainScene], gravity: { x: 0, y: -500, z: 0 } })
+		const project = new Project({ antialias: true, maxSubSteps: 10, fixedTimeStep: 1 / 120, scenes: [MainScene], gravity: { x: 0, y: -10, z: 0 } })
 
 		const destination = document.getElementById('drone')
 		destination.appendChild(project.canvas)
