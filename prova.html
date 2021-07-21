@@ -6,8 +6,15 @@
 		<link rel="stylesheet" href="./main.css"></link>
 	</head>
 <body>
-  <div id=drone></div>
+	<div id="menu">
+		<div><div id="fps"></div><img src="./menu/soundoff.png" id = "musicbutton"><img src="./menu/rain.png" id = "rainbutton"></div>
+	</div>
+	<div id="fuel">
+		<canvas id="gauge"></canvas>
+	</div>
+  	<div id=drone></div>
 </body>
 <script src="./libs/enable3d.min.js"></script>
+<script src="./libs/gauge.min.js"></script>
 <script type=module src="./mainscene.js"></script>
 </html>

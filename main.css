@@ -21,3 +21,16 @@ canvas {
 #menu img {
     padding: 2px;
 }
+
+#fps {
+    font-size: 30px;
+    padding: 5px;
+}
+
+#fuel {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    display: none;
+}

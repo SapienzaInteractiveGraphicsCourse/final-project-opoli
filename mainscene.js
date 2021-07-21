@@ -107,10 +107,54 @@ const time_up = 5000;
 const time_yaw = 200;
 var ease_func = TWEEN.Easing.Elastic.Out;
 var ease_func_speed = TWEEN.Easing.Quartic.Out;
-// var ease_func = TWEEN.Easing.Back.Out;
-// var ease_func_up = TWEEN.Easing.Quadratic.Out;
 var ease_func_up = TWEEN.Easing.Linear.None;
 var throttle_control = false;
+
+var sound, listener, droneSound, audioLoader;
+var soundsLoaded = false;
+const sounds = {
+	background: { url: './sounds/music.mp3' },
+	drone: { url: './sounds/drone.mp3' },
+}
+
+function loadSounds() {
+	const soundsLoaderMngr = new THREE.LoadingManager();
+	soundsLoaderMngr.onLoad = () => {
+		soundsLoaded = true;
+	};
+	soundsLoaderMngr.onProgress = (url, itemsLoaded, itemsTotal) => {
+		console.log("Loading sounds... ", itemsLoaded / itemsTotal * 100, '%');
+	};
+	const audioLoader = new THREE.AudioLoader(soundsLoaderMngr);
+	for (const sound of Object.values(sounds)) {
+		audioLoader.load(sound.url, function (buffer) {
+			sound.sound = buffer;
+			console.log("Loaded ", buffer);
+		});
+	}
+}
+
+function playSoundTrack() {
+	if (sound.isPlaying) {
+		document.getElementById("musicbutton").src = './menu/soundoff.png';
+		sound.pause();
+		droneSound.pause();
+	} else {
+		document.getElementById("musicbutton").src = './menu/soundin.png';
+		sound.isPlaying = false;
+		sound.setBuffer(sounds.background.sound);
+		sound.setLoop(true);
+		sound.setVolume(0.15);
+		sound.play();
+		droneSound.isPlaying = false;
+		droneSound.setBuffer(sounds.drone.sound);
+		droneSound.setLoop(true);
+		droneSound.setVolume(0.05);
+		droneSound.play();
+	}
+}
+
+
 
 
 class MainScene extends Scene3D {
@@ -161,6 +205,15 @@ class MainScene extends Scene3D {
 
 		}
 
+		//sounds
+		{
+			listener = new THREE.AudioListener();
+			this.camera.add(listener);
+			sound = new THREE.Audio(listener);
+			droneSound = new THREE.Audio(listener);
+			audioLoader = new THREE.AudioLoader();
+		}
+
 		// this.physics.collisionEvents.on('collision', data => {
 		// 	const { bodies, event } = data
 		// 	console.log(bodies[0].name, bodies[1].name, event)
@@ -180,6 +233,13 @@ class MainScene extends Scene3D {
 	acc = new Vector3(0, 0, 0);
 	ang_speed = new Vector3(0, 0, 0);
 	freefall = false;
+	gameStarted = false;
+	old_ang = new Vector3(0, 0, 0);
+	old_speed_y = 0;
+	oldTime = -0.007;
+	control = -9.81;
+	fuel = 3000;
+	gauge = null;
 
 	applyTweens(key) {
 		inputs[key] = true;
@@ -268,7 +328,7 @@ class MainScene extends Scene3D {
 			// this.drone.rotateY(Math.PI + 0.1) // a hack
 			this.drone.add(drone)
 			this.drone.add(new AxesHelper(5));
-			this.drone.position.set(35, 3, 0)
+			this.drone.position.set(35, 13, 0)
 			// add shadow
 			this.drone.traverse(child => {
 				if (child.isMesh) {
@@ -329,6 +389,8 @@ class MainScene extends Scene3D {
 				}
 			});
 
+			document.getElementById("musicbutton").addEventListener("click", playSoundTrack);
+
 			document.addEventListener('keyup', function (event) {
 				if (context.freefall) return;
 				let key = event.key.toLowerCase();
@@ -377,19 +439,54 @@ class MainScene extends Scene3D {
 
 		addCity()
 		addDrone()
-
-
+		loadSounds()
 
 	}
 
-	old_ang = new Vector3(0, 0, 0);
-	old_speed_y = 0;
-	oldTime = -0.007;
-	control = -9.81;
 	update(time) {
 		const delta = time - this.oldTime
 		this.oldTime = time;
 		if (this.drone && this.drone.body && this.thirdPersonCamera) {
+			if(!this.gameStarted) {
+				document.getElementById("menu").style.display = 'block';
+				document.getElementById("fuel").style.display = 'block';
+
+				var opts = {
+					angle: 0.15, 
+					lineWidth: 0.44, 
+					radiusScale: 1, 
+					pointer: {
+					  length: 0.6, 
+					  strokeWidth: 0.035, 
+					  color: '#000000' 
+					},
+					limitMax: true,     
+					limitMin: true,     
+					colorStart: '#6FADCF',   
+					colorStop: '#8FC0DA',    
+					strokeColor: '#E0E0E0',  
+					generateGradient: true,
+					highDpiSupport: true,     
+					staticZones: [
+						{strokeStyle: "#F03E3E", min: 0, max: 500}, 
+						{strokeStyle: "#E0E0E0", min: 500, max: 3000},
+					 ],
+					
+				  };
+				  var target = document.getElementById('gauge'); 
+				  var gauge = new Gauge(target).setOptions(opts); 
+				  
+				  gauge.maxValue = 3000; 
+				  gauge.setMinValue(0);  
+				  gauge.animationSpeed = 32;
+				  this.gauge = gauge;
+			}
+			this.gameStarted = true;
+
+			// fuel simulator
+			this.gauge.set(this.fuel); 
+			this.fuel -= 1;
+
 			this.thirdPersonCamera.Update(delta, this.theta, this.phi);
 
 			this.ang.y += this.ang_speed.y * delta;
@@ -414,13 +511,15 @@ class MainScene extends Scene3D {
 			if (this.speed.y > 8) this.control = d_speed_y / delta;
 			else this.control = -9.81 + this.speed.y
 			if (!this.freefall) this.drone.body.setGravity(0, this.control, 0)
-			console.log(this.control);
+			//console.log(this.control);
 
 			this.drone.body.needUpdate = true;
 			this.old_ang.set(this.ang.x, this.ang.y, this.ang.z);
 			this.old_speed_y = this.speed.y;
 
 			TWEEN.update();
+
+			document.getElementById("fps").innerHTML = Math.round(1 / delta) + " FPS";
 		}
 	}
 }

@@ -49,10 +49,6 @@ function loadSounds() {
 	const soundsLoaderMngr = new THREE.LoadingManager();
 	soundsLoaderMngr.onLoad = () => {
 		soundsLoaded = true;
-
-		// if (modelsLoaded & soundsLoaded) {
-		// 	main();
-		// }
 	};
 
 	soundsLoaderMngr.onProgress = (url, itemsLoaded, itemsTotal) => {
