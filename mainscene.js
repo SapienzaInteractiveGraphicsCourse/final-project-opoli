@@ -145,7 +145,7 @@ function showCommands() {
 }
 
 function playSoundTrack() {
-	if(!soundsLoaded) return;
+	if (!soundsLoaded) return;
 	if (sound.isPlaying) {
 		document.getElementById("musicbutton").src = './menu/soundoff.png';
 		sound.pause();
@@ -288,7 +288,7 @@ class MainScene extends Scene3D {
 			});
 		}
 	}
-
+	droneElements = {};
 	async create() {
 		const { lights } = await this.warpSpeed('-ground', '-orbitControls')
 
@@ -298,7 +298,7 @@ class MainScene extends Scene3D {
 		ambientLight.intensity = intensity
 		directionalLight.intensity = intensity
 
-		// this.physics.debug.enable()
+
 
 		const addCity = async () => {
 			const object = await this.load.gltf('city')
@@ -336,9 +336,8 @@ class MainScene extends Scene3D {
 
 			this.drone = new ExtendedObject3D()
 			this.drone.name = 'drone'
-			// this.drone.rotateY(Math.PI + 0.1) // a hack
 			this.drone.add(drone)
-			//this.drone.add(new AxesHelper(5));
+			this.drone.add(new AxesHelper(2));
 			this.drone.position.set(35, 1, 0)
 			// add shadow
 			this.drone.traverse(child => {
@@ -347,16 +346,68 @@ class MainScene extends Scene3D {
 					// https://discourse.threejs.org/t/cant-export-material-from-blender-gltf/12258
 					child.material.roughness = 1
 					child.material.metalness = 0
+					if (child.name === "PropellerFR") {
+						this.droneElements.propellerFR = child;
+						child.material.color.setHex(0x000000)
+					}
+					if (child.name === "PropellerFL") {
+						this.droneElements.propellerFL = child;
+						child.material.color.setHex(0x000000)
+					}
+					if (child.name === "PropellerBR") {
+						this.droneElements.propellerBR = child;
+						child.material.color.setHex(0x000000)
+					}
+					if (child.name === "PropellerBL") {
+						this.droneElements.propellerBL = child;
+						child.material.color.setHex(0x000000)
+					}
+					if (child.name === "propellers_axes") {
+						this.droneElements.propellers_axes = child
+					}
 				}
 			})
+			this.physics.add.existing(this.droneElements.propellerFL, { shape: 'hull', mass: 0.01 });
+			this.physics.add.existing(this.droneElements.propellerBR, { shape: 'hull', mass: 0.01 });
+			this.physics.add.existing(this.droneElements.propellerBL, { shape: 'hull', mass: 0.01 });
+			this.physics.add.existing(this.droneElements.propellerFR, { shape: 'hull', mass: 0.01 });
 
-			/**
-			 * Add the player to the scene with a body
-			 */
+			this.droneElements.propellerFL.parent.remove(this.droneElements.propellerFL)
+			this.droneElements.propellerBR.parent.remove(this.droneElements.propellerBR)
+			this.droneElements.propellerBL.parent.remove(this.droneElements.propellerBL)
+			this.droneElements.propellerFR.parent.remove(this.droneElements.propellerFR)
+
+
 			this.add.existing(this.drone)
 			this.physics.add.existing(this.drone, {
 				shape: 'hull',
 				mass: 1
+			})
+			this.drone.children[0].children[6].add(this.droneElements.propellerFL)
+			this.drone.children[0].children[6].add(this.droneElements.propellerFR)
+			this.drone.children[0].children[6].add(this.droneElements.propellerBL)
+			this.drone.children[0].children[6].add(this.droneElements.propellerBR)
+			const hinge_y = 0.15
+			this.h1 = this.physics.add.constraints.hinge(this.drone.body, this.droneElements.propellerFR.body, {
+				pivotA: { x: -0.81, y: hinge_y, z: 0.695 },
+				axisA: { y: 1 },
+				axisB: { x: -1 }
+			})
+			// this.h1.enableAngularMotor(true, 10, 0.25)
+			this.physics.add.constraints.hinge(this.drone.body, this.droneElements.propellerFL.body, {
+				pivotA: { x: 0.81, y: hinge_y, z: 0.695 },
+				axisA: { y: 1 },
+				axisB: { x: 1 }
+			})
+			this.physics.add.constraints.hinge(this.drone.body, this.droneElements.propellerBR.body, {
+				pivotA: { x: -0.81, y: hinge_y, z: -0.675 },
+				axisA: { y: 1 },
+				axisB: { x: 1 }
+			})
+			this.physics.add.constraints.hinge(this.drone.body, this.droneElements.propellerBL.body, {
+				pivotA: { x: 0.81, y: hinge_y, z: -0.675 },
+				axisA: { y: 1 },
+				axisB: { x: -1 }
 			})
 
 			this.drone.body.checkCollisions = true;
@@ -364,10 +415,12 @@ class MainScene extends Scene3D {
 			this.drone.body.on.collision((otherObj, event) => {
 				if (otherObj.name === "coin") {
 
-				} else if (new Vector3(this.drone.body.velocity.x, this.drone.body.velocity.y, this.drone.body.velocity.z).length() > 5) {
+				} else if (otherObj.name === "PropellerFR" || otherObj.name === "PropellerFL" || otherObj.name === "PropellerBR" || otherObj.name === "PropellerBL") {
+
+				} else if (new Vector3(this.drone.body.velocity.x, this.drone.body.velocity.y, this.drone.body.velocity.z).length() > 90) {
 					this.freefall = true;
 					this.drone.body.setAngularFactor(1, 1, 1)
-					this.drone.body.setGravity(0,-9.81,0)
+					this.drone.body.setGravity(0, -9.81, 0)
 					console.log('il drone è diventato matteo germano')
 				}
 			})
@@ -452,46 +505,49 @@ class MainScene extends Scene3D {
 		addCity().then(() => {
 			addDrone();
 		});
-		
+
 		loadSounds()
 
 	}
 
+	p_speed_p = new THREE.Vector4(0, 0, 0, 0);
+	p_speed_r = new THREE.Vector4(0, 0, 0, 0);
+	p_speed_y = new THREE.Vector4(0, 0, 0, 0);
 	update(time) {
 		const delta = time - this.oldTime
 		this.oldTime = time;
 		if (this.drone && this.drone.body && this.thirdPersonCamera) {
-			if(!this.gameStarted) {
+			if (!this.gameStarted) {
 				document.getElementById("menu").style.display = 'block';
 				document.getElementById("fuel").style.display = 'block';
 
 				var opts = {
-					angle: 0.15, 
-					lineWidth: 0.44, 
-					radiusScale: 1, 
+					angle: 0.15,
+					lineWidth: 0.44,
+					radiusScale: 1,
 					pointer: {
-					  length: 0.6, 
-					  strokeWidth: 0.035, 
-					  color: '#000000' 
+						length: 0.6,
+						strokeWidth: 0.035,
+						color: '#000000'
 					},
-					limitMax: true,     
-					limitMin: true,     
-					colorStart: '#6FADCF',   
-					colorStop: '#8FC0DA',    
-					strokeColor: '#E0E0E0',  
+					limitMax: true,
+					limitMin: true,
+					colorStart: '#6FADCF',
+					colorStop: '#8FC0DA',
+					strokeColor: '#E0E0E0',
 					generateGradient: true,
-					highDpiSupport: true,     
+					highDpiSupport: true,
 					staticZones: [
-						{strokeStyle: "#F03E3E", min: 0, max: 500}, 
-						{strokeStyle: "#E0E0E0", min: 500, max: 3000},
-					 ],
-					
-				  };
-				var target = document.getElementById('gauge'); 
-				var gauge = new Gauge(target).setOptions(opts); 
-				
-				gauge.maxValue = 3000; 
-				gauge.setMinValue(0);  
+						{ strokeStyle: "#F03E3E", min: 0, max: 500 },
+						{ strokeStyle: "#E0E0E0", min: 500, max: 3000 },
+					],
+
+				};
+				var target = document.getElementById('gauge');
+				var gauge = new Gauge(target).setOptions(opts);
+
+				gauge.maxValue = 3000;
+				gauge.setMinValue(0);
 				gauge.animationSpeed = 32;
 				this.gauge = gauge;
 
@@ -511,7 +567,7 @@ class MainScene extends Scene3D {
 			this.gameStarted = true;
 
 			// fuel simulator
-			this.gauge.set(this.fuel); 
+			this.gauge.set(this.fuel);
 			this.fuel -= 1;
 
 			this.thirdPersonCamera.Update(delta, this.theta, this.phi);
@@ -521,8 +577,8 @@ class MainScene extends Scene3D {
 			var d_ang = new Vector3(this.ang.x - this.old_ang.x, this.ang.y - this.old_ang.y, this.ang.z - this.old_ang.z)
 			const d_speed_y = this.speed.y - this.old_speed_y;
 			if (this.freefall) {
-				d_ang = new Vector3(0,0,0);
-				this.speed = new Vector3(0,0,0);
+				d_ang = new Vector3(0, 0, 0);
+				this.speed = new Vector3(0, 0, 0);
 			}
 			this.drone.body.setAngularVelocityY(d_ang.y / delta);
 
@@ -537,7 +593,36 @@ class MainScene extends Scene3D {
 			this.drone.body.setVelocityZ(cos_rot_y * this.speed.z - sin_rot_y * this.speed.x);
 			if (this.speed.y > 8) this.control = d_speed_y / delta;
 			else this.control = -9.81 + this.speed.y
-			if (!this.freefall) this.drone.body.setGravity(0, this.control, 0)
+			if (!this.freefall) {
+				this.drone.body.setGravity(0, this.control, 0)
+				this.droneElements.propellerFR.body.setGravity(0, this.control, 0)
+				this.droneElements.propellerFL.body.setGravity(0, this.control, 0)
+				this.droneElements.propellerBR.body.setGravity(0, this.control, 0)
+				this.droneElements.propellerBL.body.setGravity(0, this.control, 0)
+			}
+
+			// propellers
+
+			const p_speed = this.speed.y;
+
+			this.p_speed_p.x = -this.ang.x * 10;
+			this.p_speed_p.y = -this.ang.x * 10;
+			this.p_speed_p.z = this.ang.x * 10;
+			this.p_speed_p.w = this.ang.x * 10;
+			this.p_speed_r.x = -this.ang.z * 10;
+			this.p_speed_r.y = this.ang.z * 10;
+			this.p_speed_r.z = -this.ang.z * 10;
+			this.p_speed_r.w = this.ang.z * 10;
+			this.p_speed_y.x = this.ang_speed.y * 0.25;
+			this.p_speed_y.y = -this.ang_speed.y * 0.25;
+			this.p_speed_y.z = -this.ang_speed.y * 0.25;
+			this.p_speed_y.w = this.ang_speed.y * 0.25;
+
+			this.droneElements.propellerFR.body.setAngularVelocityY(-(p_speed + this.p_speed_p.x + this.p_speed_r.x + this.p_speed_y.x));
+			this.droneElements.propellerFL.body.setAngularVelocityY(p_speed + this.p_speed_p.y + this.p_speed_r.y + this.p_speed_y.y);
+			this.droneElements.propellerBR.body.setAngularVelocityY(p_speed + this.p_speed_p.z + this.p_speed_r.z + this.p_speed_y.z);
+			this.droneElements.propellerBL.body.setAngularVelocityY(-(p_speed + this.p_speed_p.w + this.p_speed_r.w + this.p_speed_y.w));
+
 			//console.log(this.control);
 
 			this.drone.body.needUpdate = true;
@@ -546,7 +631,7 @@ class MainScene extends Scene3D {
 
 			TWEEN.update();
 
-			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Flight Time: "+  Math.round(time) + "s";
+			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Flight Time: " + Math.round(time) + "s";
 		}
 	}
 }
