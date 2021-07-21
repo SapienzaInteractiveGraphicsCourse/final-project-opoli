@@ -134,7 +134,16 @@ function loadSounds() {
 	}
 }
 
+function showCommands() {
+	if (document.getElementById("commands").style.display == 'block') {
+		document.getElementById("commands").style.display = 'none';
+	} else {
+		document.getElementById("commands").style.display = 'block';
+	}
+}
+
 function playSoundTrack() {
+	if(!soundsLoaded) return;
 	if (sound.isPlaying) {
 		document.getElementById("musicbutton").src = './menu/soundoff.png';
 		sound.pause();
@@ -390,6 +399,7 @@ class MainScene extends Scene3D {
 			});
 
 			document.getElementById("musicbutton").addEventListener("click", playSoundTrack);
+			document.getElementById("joystickbutton").addEventListener("click", showCommands);
 
 			document.addEventListener('keyup', function (event) {
 				if (context.freefall) return;
