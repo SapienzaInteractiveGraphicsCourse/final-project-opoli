@@ -529,7 +529,7 @@ class MainScene extends Scene3D {
 
 			TWEEN.update();
 
-			document.getElementById("fps").innerHTML = Math.round(1 / delta) + " FPS";
+			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta);
 		}
 	}
 }
