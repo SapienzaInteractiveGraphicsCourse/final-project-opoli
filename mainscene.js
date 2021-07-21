@@ -49,6 +49,18 @@ const exclusives = {
 	q: "e"
 }
 
+// tweens
+const tweens = {
+	w: null,
+	s: null,
+	a: null,
+	d: null,
+	q: null,
+	e: null,
+	" ": null,
+	"<": null,
+}
+
 class ThirdPersonCamera {
 	constructor(params) {
 		this._params = params;
@@ -89,17 +101,7 @@ class ThirdPersonCamera {
 		this._camera.lookAt(this._currentLookAt);
 	}
 }
-// tweens
-const tweens = {
-	w: null,
-	s: null,
-	a: null,
-	d: null,
-	q: null,
-	e: null,
-	" ": null,
-	"<": null,
-}
+
 
 const transition_s = 700;
 const transition = 2 * transition_s;
@@ -110,7 +112,7 @@ var ease_func_speed = TWEEN.Easing.Quartic.Out;
 var ease_func_up = TWEEN.Easing.Linear.None;
 var throttle_control = false;
 
-var sound, listener, droneSound, audioLoader;
+var sound, listener, droneSound;
 var soundsLoaded = false;
 const sounds = {
 	background: { url: './sounds/music.mp3' },
@@ -122,14 +124,14 @@ function loadSounds() {
 	soundsLoaderMngr.onLoad = () => {
 		soundsLoaded = true;
 	};
-	soundsLoaderMngr.onProgress = (url, itemsLoaded, itemsTotal) => {
+	/*soundsLoaderMngr.onProgress = (url, itemsLoaded, itemsTotal) => {
 		console.log("Loading sounds... ", itemsLoaded / itemsTotal * 100, '%');
-	};
+	};*/
 	const audioLoader = new THREE.AudioLoader(soundsLoaderMngr);
 	for (const sound of Object.values(sounds)) {
 		audioLoader.load(sound.url, function (buffer) {
 			sound.sound = buffer;
-			console.log("Loaded ", buffer);
+			//console.log("Loaded ", buffer);
 		});
 	}
 }
@@ -220,7 +222,7 @@ class MainScene extends Scene3D {
 			this.camera.add(listener);
 			sound = new THREE.Audio(listener);
 			droneSound = new THREE.Audio(listener);
-			audioLoader = new THREE.AudioLoader();
+			//audioLoader = new THREE.AudioLoader();
 		}
 
 		// this.physics.collisionEvents.on('collision', data => {
