@@ -403,6 +403,11 @@ class MainScene extends Scene3D {
 			city.scale.set(10, 10, 10)
 			city.position.set(430, -5, 400)
 			this.add.existing(city)
+			var normal = this.imageLoader.load('./textures/waternormals.jpg');
+
+			normal.wrapS = THREE.RepeatWrapping;
+			normal.wrapT = THREE.RepeatWrapping;
+			var c = this.directional.position.clone();
 
 			city.traverse(child => {
 				if (child.isMesh) {
@@ -413,10 +418,33 @@ class MainScene extends Scene3D {
 						child.material.map.needsUpdate = true
 						child.material.normalMap.needsUpdate = true
 
-					} else if (child.material.color.r === 0.5684522089150544) {
-						child.material.color.setRGB(0.752941, 0.752941, 0.752941)
 					} else if (child.name.includes("Cyan")) {
-
+						var water = new Water(child.geometry, {
+							textureWidth: 2048,
+							textureHeight: 2048,
+							waterNormals: normal,
+							alpha: 0.9,
+							fog: true,
+							distortionScale: 15.0,
+							sunDirection: c.normalize(),
+							sunColor: 0x7f7f7f,
+							waterColor: 0x001e0f,
+							side: THREE.DoubleSide
+						});
+						water.matrixAutoUpdate = false;
+						water.rotationAutoUpdate = false;
+						water.parent = child.parent;
+						water.updateMatrix();
+						const p = child.parent;
+						for (let i = 0; i < p.children.length; i++) {
+							const ch = p.children[i];
+							if (ch.name === child.name) {
+								p.remove(ch);
+								p.add(water);
+							}
+						}
+					} else if (child.material.color && child.material.color.r === 0.5684522089150544) {
+						child.material.color.setRGB(0.752941, 0.752941, 0.752941)
 					}
 					child.castShadow = child.receiveShadow = true;
 					child.material.metalness = 0
@@ -518,6 +546,15 @@ class MainScene extends Scene3D {
 				if (key === "g") {
 					context.drone.body.setCollisionFlags(2);
 					context.drone.position.setY(100);
+					context.drone.body.needUpdate = true;
+					context.drone.body.once.update(() => {
+						context.drone.body.setCollisionFlags(0);
+						context.drone.body.setVelocity(0, 0, 0);
+					})
+				}
+				if (key === "t") {
+					context.drone.body.setCollisionFlags(2);
+					context.drone.position.set(78.16771697998047, 33.26953125, 87.68900299072266);
 					context.drone.body.needUpdate = true;
 					context.drone.body.once.update(() => {
 						context.drone.body.setCollisionFlags(0);
