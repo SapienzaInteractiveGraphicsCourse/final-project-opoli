@@ -586,9 +586,30 @@ class MainScene extends Scene3D {
 	}
 
 	shiftRain(isRaining) {
+		if(isRaining) {
+			this.rain.material.opacity = 1
+		} else {
+			this.rain.material.opacity = 0
+		}
 		this.isRaining = isRaining;
+<<<<<<< HEAD
 		console.log("Is raining: " + isRaining);
 		if (isRaining) {
+=======
+		
+		new Noty({
+			type: 'info',
+			layout: 'topRight',
+			theme: 'nest',
+			text: isRaining?"It's raining...":"The rain has stopped.",
+			timeout: '3000',
+			progressBar: true,
+			closeWith: ['click'],
+			killer: true,
+		}).show();
+		
+		if(isRaining) {
+>>>>>>> 75bb632615b83ea26e722bea037386e2f6c18473
 			document.getElementById("rainbutton").src = './menu/rain.png';
 		} else {
 			document.getElementById("rainbutton").src = './menu/sun.png';
