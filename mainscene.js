@@ -10,7 +10,7 @@ const {
 	PointerDrag
 } = ENABLE3D
 import TWEEN, { Easing, Tween } from './libs/tween.esm.js';
-import { AxesHelper, BoxGeometry, LineBasicMaterial, Mesh, MeshPhongMaterial, MultiplyOperation, Vector3 } from './three.js-master/build/three.module.js';
+import { AxesHelper, BoxGeometry, LineBasicMaterial, Mesh, MeshPhongMaterial, MultiplyOperation, Plane, PlaneGeometry, Vector3 } from './three.js-master/build/three.module.js';
 import { PointerLockControls } from './three.js-master/examples/jsm/controls/PointerLockControls.js';
 import { CSM } from './three.js-master/examples/jsm/csm/CSM.js'
 import { CSMHelper } from './three.js-master/examples/jsm/csm/CSMHelper.js'
@@ -185,7 +185,7 @@ class MainScene extends Scene3D {
 
 
 
-			this.radius = 5;
+			this.radius = 10;
 			this.theta = 0;
 			this.phi = Math.PI / 6;
 
@@ -338,13 +338,31 @@ class MainScene extends Scene3D {
 	droneElements = {};
 	async create() {
 		const { lights } = await this.warpSpeed('-ground', '-orbitControls')
+		let sky = this.scene.children[1]
+		this.physics.add.existing(sky, {
+			shape: 'concave',
+			collisionFlags: 1,
+			mass: 0
+		})
 
 		const { hemisphereLight, ambientLight, directionalLight } = lights
 		const intensity = 0.65
-		hemisphereLight.intensity = intensity
+		hemisphereLight.intensity = 0
 		ambientLight.intensity = intensity
 		directionalLight.intensity = intensity
 
+		// ground
+		this.ground = new ExtendedObject3D()
+		this.ground.add(new Mesh(new PlaneGeometry(1000, 1000), new MeshPhongMaterial({ color: 0xff0000 })));
+		this.ground.rotation.x = -Math.PI / 2
+		this.ground.position.setY(-3.5)
+		this.ground.visible = false;
+
+		this.add.existing(this.ground)
+		this.physics.add.existing(this.ground, {
+			collisionFlags: 1,
+			mass: 0
+		})
 
 
 		const addCity = async () => {
@@ -355,7 +373,7 @@ class MainScene extends Scene3D {
 			city.name = 'scene'
 			city.add(scene)
 			city.scale.set(10, 10, 10)
-			city.position.set(100, -5, 500)
+			city.position.set(430, -5, 400)
 			this.add.existing(city)
 
 			city.traverse(child => {
@@ -458,6 +476,15 @@ class MainScene extends Scene3D {
 				if (context.freefall) return;
 				let key = event.key.toLowerCase();
 				if (key === "h") console.log(context.drone.position)
+				if (key === "g") {
+					context.drone.body.setCollisionFlags(2);
+					context.drone.position.setY(100);
+					context.drone.body.needUpdate = true;
+					context.drone.body.once.update(() => {
+						context.drone.body.setCollisionFlags(0);
+						context.drone.body.setVelocity(0, 0, 0);
+					})
+				}
 				if (key === 'u') {
 					playSoundTrack();
 				}
@@ -586,25 +613,25 @@ class MainScene extends Scene3D {
 	}
 
 	shiftRain(isRaining) {
-		if(isRaining) {
+		if (isRaining) {
 			this.rain.material.opacity = 1
 		} else {
 			this.rain.material.opacity = 0
 		}
 		this.isRaining = isRaining;
-		
+
 		new Noty({
 			type: 'info',
 			layout: 'topRight',
 			theme: 'nest',
-			text: isRaining?"It's raining...":"The rain has stopped.",
+			text: isRaining ? "It's raining..." : "The rain has stopped.",
 			timeout: '3000',
 			progressBar: true,
 			closeWith: ['click'],
 			killer: true,
 		}).show();
-		
-		if(isRaining) {
+
+		if (isRaining) {
 			document.getElementById("rainbutton").src = './menu/rain.png';
 		} else {
 			document.getElementById("rainbutton").src = './menu/sun.png';
@@ -621,11 +648,11 @@ class MainScene extends Scene3D {
 		const delta = time - this.oldTime
 		this.oldTime = time;
 		if (delta >= project.projectConfig.maxSubSteps * project.projectConfig.fixedTimeStep) {
-			console.log(project.projectConfig.maxSubSteps);
-			console.log('1/', 1 / project.projectConfig.fixedTimeStep);
+			// console.log(project.projectConfig.maxSubSteps);
+			// console.log('1/', 1 / project.projectConfig.fixedTimeStep);
 			project.projectConfig.maxSubSteps *= 2
 			project.projectConfig.fixedTimeStep *= 2
-		} else if (delta < project.projectConfig.maxSubSteps * project.projectConfig.fixedTimeStep / 4) {
+		} else if (delta < project.projectConfig.maxSubSteps * project.projectConfig.fixedTimeStep / 8) {
 			project.projectConfig.maxSubSteps /= 2
 			project.projectConfig.fixedTimeStep /= 2
 		}
@@ -694,11 +721,11 @@ class MainScene extends Scene3D {
 			sin_rot_y = Math.sin(this.drone.rotation.y);
 
 			// propellers
-
+			// this.speed.x*=3
+			// this.speed.z*=3
 			const p_speed = this.speed.y * 10;
 			if (!this.freefall) {
 				this.drone.body.applyForceY(p_speed * delta / 10 + d_speed_y)
-				// this.drone.body.applyForceY(p_speed)
 				this.drone.body.applyForceY(-this.drone.body.velocity.y * 0.001)
 				this.drone.body.setAngularVelocityY(d_ang.y / delta);
 				this.drone.body.setAngularVelocityX((cos_rot_y * d_ang.x + sin_rot_y * d_ang.z) / delta);
@@ -757,7 +784,7 @@ class MainScene extends Scene3D {
 var project;
 window.addEventListener('load', () => {
 	PhysicsLoader('./libs/ammo_new', () => {
-		project = new Project({ antialias: true, maxSubSteps: 1, fixedTimeStep: 1 / 960, scenes: [MainScene] })
+		project = new Project({ antialias: true, maxSubSteps: 1, fixedTimeStep: 1 / 960, scenes: [MainScene], gravity: { x: 0, y: -9.81, z: 0 } })
 
 		const destination = document.getElementById('drone')
 		destination.appendChild(project.canvas)
