@@ -430,9 +430,9 @@ class MainScene extends Scene3D {
 
 				} else if (otherObj.name === "PropellerFR" || otherObj.name === "PropellerFL" || otherObj.name === "PropellerBR" || otherObj.name === "PropellerBL") {
 
-				} else if (new Vector3(this.drone.body.velocity.x, this.drone.body.velocity.y, this.drone.body.velocity.z).length() > 5) {
+				} else if (new Vector3(this.drone.body.velocity.x, this.drone.body.velocity.y, this.drone.body.velocity.z).length() > 8) {
 					this.collisionDrone();
-					console.log('il drone è diventato matteo germano')
+					console.log('COLLISIONE')
 
 					if(this.lives == 0) {
 						this.freefall = true;
@@ -534,7 +534,7 @@ class MainScene extends Scene3D {
 	isRaining = false;
 	collisionDrone() {
 		function changeColor(context, times, color) {
-			console.log("TIMES TO BLINK: "+times)
+			//console.log("TIMES TO BLINK: "+times)
 			if(times == 0) return;
 
 			context.droneElements.propellerBL.material.transparent = true;
@@ -555,14 +555,32 @@ class MainScene extends Scene3D {
 			}
 		}
 
-		this.lives -= 1;
-		console.log("Vite rimanenti "+ this.lives)
+		if(this.lives > 0) this.lives -= 1;
+		new Noty({
+			type: 'warning',
+			layout: 'topRight',
+			theme: 'nest',
+			text: 'You lost 1 life',
+			timeout: '3000',
+			progressBar: true,
+			closeWith: ['click'],
+			killer: true,
+		}).show();
+
 		if(this.lives > 0) {
 			var context = this;
-			console.log(context.drone.children[0]);
 			setTimeout(function () {changeColor(context, 6, 0x000000)}, 500);
 		} else {
-			console.log("sei morto");
+			new Noty({
+				type: 'error',
+				layout: 'topRight',
+				theme: 'nest',
+				text: 'You died.',
+				timeout: '3000',
+				progressBar: true,
+				closeWith: ['click'],
+				killer: true,
+			}).show();
 		}
 		
 	}
@@ -622,13 +640,11 @@ class MainScene extends Scene3D {
 				gauge.animationSpeed = 32;
 				this.gauge = gauge;
 
-
-
 				new Noty({
 					type: 'success',
 					layout: 'topRight',
 					theme: 'nest',
-					text: 'Hello, just testing! 🤖',
+					text: 'Hi, you can start playing!',
 					timeout: '3000',
 					progressBar: true,
 					closeWith: ['click'],
@@ -656,7 +672,7 @@ class MainScene extends Scene3D {
 
 			const p_speed = this.speed.y * 10;
 			if (!this.freefall) {
-				this.drone.body.applyForceY(p_speed * delta / 5)
+				this.drone.body.applyForceY(p_speed * delta / 15)
 				this.drone.body.setAngularVelocityY(d_ang.y / delta);
 				this.drone.body.setAngularVelocityX((cos_rot_y * d_ang.x + sin_rot_y * d_ang.z) / delta);
 				this.drone.body.setAngularVelocityZ((cos_rot_y * d_ang.z - sin_rot_y * d_ang.x) / delta);
