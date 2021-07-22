@@ -336,8 +336,15 @@ class MainScene extends Scene3D {
 		}
 	}
 	droneElements = {};
+
 	async create() {
 		const { lights } = await this.warpSpeed('-ground', '-orbitControls')
+
+
+		
+
+
+
 		let sky = this.scene.children[1]
 		this.physics.add.existing(sky, {
 			shape: 'concave',
@@ -462,13 +469,15 @@ class MainScene extends Scene3D {
 			this.drone.body.checkCollisions = true;
 
 			this.drone.body.on.collision((otherObj, event) => {
-				if (otherObj.name === "coin") {
-
+				if (otherObj.name.includes("CONSUMABLE")) {
+					this.physics.destroy(otherObj.body)
+					otherObj.parent.remove(otherObj)
+					console.log('CONSUMABILE HITTATO '+otherObj.name)
 				} else if (otherObj.name === "PropellerFR" || otherObj.name === "PropellerFL" || otherObj.name === "PropellerBR" || otherObj.name === "PropellerBL") {
 
 				} else if (new Vector3(this.drone.body.velocity.x, this.drone.body.velocity.y, this.drone.body.velocity.z).length() > 8) {
 					this.collisionDrone();
-					console.log('COLLISIONE')
+					console.log('COLLISIONE FORTE')
 
 					if (this.lives == 0) {
 						this.freefall = true;
@@ -568,10 +577,29 @@ class MainScene extends Scene3D {
 
 		addCity().then(() => {
 			addDrone();
-		});
+
+			// boxes 
+			setTimeout(() => {
+			for (let i = 0; i < 20; i++) {
+				const x = (Math.random() - 0.5) * 5,
+					y = 150,
+					z = (Math.random() - 0.5) * 5
+		
+				const geometry = new THREE.BoxGeometry(1, 1, 1)
+				const material = new THREE.MeshLambertMaterial({ color: 0x00ff00 })
+				const box_three = new THREE.Mesh(geometry, material)
+				const box_object = new ExtendedObject3D();
+				box_object.add(box_three)
+				box_object.name = "CONSUMABLE "+i
+				box_object.position.set(x, y, z)
+				this.add.existing(box_object)
+				this.physics.add.existing(box_object)
+
+				}
+			}, 1000)
+		})
 
 		loadSounds()
-
 	}
 
 	blink_color = 0x000000;
