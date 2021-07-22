@@ -430,13 +430,17 @@ class MainScene extends Scene3D {
 
 				} else if (otherObj.name === "PropellerFR" || otherObj.name === "PropellerFL" || otherObj.name === "PropellerBR" || otherObj.name === "PropellerBL") {
 
-				} else if (new Vector3(this.drone.body.velocity.x, this.drone.body.velocity.y, this.drone.body.velocity.z).length() > 8) {
-					this.freefall = true;
-					this.drone.body.setAngularFactor(1, 1, 1)
-					// this.drone.body.setGravity(0, -9.81, 0)
+				} else if (new Vector3(this.drone.body.velocity.x, this.drone.body.velocity.y, this.drone.body.velocity.z).length() > 5) {
+					this.collisionDrone();
 					console.log('il drone è diventato matteo germano')
-					new TWEEN.Tween(this.speed).to({ x: 0, y: 0, z: 0 }, time_up).start().easing(ease_func_up)
-					new TWEEN.Tween(this.ang_speed).to({ y: 0 }, time_yaw).start().easing(ease_func_up)
+
+					if(this.lives == 0) {
+						this.freefall = true;
+						this.drone.body.setAngularFactor(1, 1, 1)
+						new TWEEN.Tween(this.speed).to({ x: 0, y: 0, z: 0 }, time_up).start().easing(ease_func_up)
+						new TWEEN.Tween(this.ang_speed).to({ y: 0 }, time_yaw).start().easing(ease_func_up)
+					}
+					
 				}
 			})
 
@@ -523,6 +527,43 @@ class MainScene extends Scene3D {
 
 		loadSounds()
 
+	}
+
+	blink_color = 0x000000;
+	lives = 3;
+	collisionDrone() {
+		function changeColor(context, times, color) {
+			console.log("TIMES TO BLINK: "+times)
+			if(times == 0) return;
+
+			context.droneElements.propellerBL.material.transparent = true;
+			context.droneElements.propellerFL.material.transparent = true;
+			context.droneElements.propellerBR.material.transparent = true;
+			context.droneElements.propellerFR.material.transparent = true;
+			context.droneElements.propellerBL.material.opacity = color;
+			context.droneElements.propellerFL.material.opacity = color;
+			context.droneElements.propellerBR.material.opacity = color;
+			context.droneElements.propellerFR.material.opacity = color;
+
+			context.drone.children[0].material.transparent = true;
+			context.drone.children[0].material.opacity = color;
+			if(color == 1) {
+				setTimeout(function () {changeColor(context, times-1, 0)}, 500);
+			} else {
+				setTimeout(function () {changeColor(context, times-1, 1)}, 500);
+			}
+		}
+
+		this.lives -= 1;
+		console.log("Vite rimanenti "+ this.lives)
+		if(this.lives > 0) {
+			var context = this;
+			console.log(context.drone.children[0]);
+			setTimeout(function () {changeColor(context, 6, 0x000000)}, 500);
+		} else {
+			console.log("sei morto");
+		}
+		
 	}
 
 	p_speed_p = new THREE.Vector4(0, 0, 0, 0);
@@ -647,8 +688,8 @@ class MainScene extends Scene3D {
 			positionAttribute.needsUpdate = true;
 
 			TWEEN.update();
-
-			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Flight Time: " + Math.round(time) + "s";
+			
+			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Flight Time: " + Math.round(time) + "s <br>" + "Lives: <span style='color: red'>"+"♥".repeat(this.lives)+"</span>";
 
 			this.csm.update(this.camera.matrix);
 		}
