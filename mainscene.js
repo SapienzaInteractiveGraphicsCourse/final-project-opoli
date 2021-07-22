@@ -337,13 +337,46 @@ class MainScene extends Scene3D {
 	}
 	droneElements = {};
 
+	loadWater() {
+
+		var geo = new THREE.PlaneBufferGeometry(15000,15000,10,10);  
+		
+		var c = directional.position.clone();
+	  
+		var normal = imageLoader.load('https://www.titansoftime.com/textures/water/waternormals.jpg');
+		
+		normal.wrapS = THREE.RepeatWrapping;
+		normal.wrapT = THREE.RepeatWrapping;  
+		
+		water = new THREE.Water(geo, {
+		  textureWidth: 2048,
+		  textureHeight: 2048,
+		  waterNormals: normal,
+		  alpha: 0.9,
+		  fog: true,
+		  distortionScale: 15.0,
+		  sunDirection: c.normalize(),
+		  sunColor: 0x7f7f7f,
+		  waterColor: 0x001e0f,
+		  side: THREE.DoubleSide
+		});
+		
+		water.rotation.x = - Math.PI * 0.5;
+	  
+		water.position.y = 85;
+	  
+		water.matrixAutoUpdate = false;
+		water.rotationAutoUpdate = false;
+		water.updateMatrix();
+	  
+		water.name = 'water';
+	  
+		scene.add(water);
+	  
+	  }
+
 	async create() {
 		const { lights } = await this.warpSpeed('-ground', '-orbitControls')
-
-
-		
-
-
 
 		let sky = this.scene.children[1]
 		this.physics.add.existing(sky, {
@@ -373,19 +406,24 @@ class MainScene extends Scene3D {
 
 
 		const addCity = async () => {
-			var material_grass = new THREE.MeshStandardMaterial();
-			var tex_map;
-			const texture_grass = new THREE.TextureLoader().load('./textures/grass.jpeg', (texture) => {
-				material_grass.map = texture;
-				material_grass.needsUpdate = true;
+			var tex_map, tex_normal_map;
+			new THREE.TextureLoader().load('./textures/grass.jpeg', (texture) => {
 				tex_map = texture
 				tex_map.wrapS = THREE.RepeatWrapping;
 				tex_map.wrapT = THREE.RepeatWrapping;
 
-				tex_map.repeat.set(1, 1);
+				tex_map.repeat.set(0.5, 0.5);
 
 				tex_map.anisotropy = 4;
-				console.log(tex_map)
+			});
+			new THREE.TextureLoader().load('./textures/grasslight-big-nm.jpg', (texture) => {
+				tex_normal_map = texture
+				tex_normal_map.wrapS = THREE.RepeatWrapping;
+				tex_normal_map.wrapT = THREE.RepeatWrapping;
+
+				tex_normal_map.repeat.set(0.5, 0.5);
+
+				tex_normal_map.anisotropy = 4;
 			});
 
 
@@ -404,8 +442,12 @@ class MainScene extends Scene3D {
 					if (child.name.includes("Green")) {
 						child.material.color.setHex(0xffffff);
 						child.material.map = tex_map;
+						child.material.normalMap = tex_normal_map;
 						child.material.map.needsUpdate = true
+						child.material.normalMap.needsUpdate = true
 
+					} else if (child.material.color.r === 0.5684522089150544) {
+							child.material.color.setRGB(0.752941, 0.752941, 0.752941)
 					}
 					child.castShadow = child.receiveShadow = true;
 					child.material.metalness = 0
@@ -469,10 +511,11 @@ class MainScene extends Scene3D {
 			this.drone.body.checkCollisions = true;
 
 			this.drone.body.on.collision((otherObj, event) => {
+				// console.log(otherObj.material.color, otherObj);
 				if (otherObj.name.includes("CONSUMABLE")) {
 					this.physics.destroy(otherObj.body)
 					otherObj.parent.remove(otherObj)
-					console.log('CONSUMABILE HITTATO '+otherObj.name)
+					console.log('CONSUMABILE HITTATO ' + otherObj.name)
 				} else if (otherObj.name === "PropellerFR" || otherObj.name === "PropellerFL" || otherObj.name === "PropellerBR" || otherObj.name === "PropellerBL") {
 
 				} else if (new Vector3(this.drone.body.velocity.x, this.drone.body.velocity.y, this.drone.body.velocity.z).length() > 8) {
@@ -580,20 +623,20 @@ class MainScene extends Scene3D {
 
 			// boxes 
 			setTimeout(() => {
-			for (let i = 0; i < 20; i++) {
-				const x = (Math.random() - 0.5) * 5,
-					y = 150,
-					z = (Math.random() - 0.5) * 5
-		
-				const geometry = new THREE.BoxGeometry(1, 1, 1)
-				const material = new THREE.MeshLambertMaterial({ color: 0x00ff00 })
-				const box_three = new THREE.Mesh(geometry, material)
-				const box_object = new ExtendedObject3D();
-				box_object.add(box_three)
-				box_object.name = "CONSUMABLE "+i
-				box_object.position.set(x, y, z)
-				this.add.existing(box_object)
-				this.physics.add.existing(box_object)
+				for (let i = 0; i < 20; i++) {
+					const x = (Math.random() - 0.5) * 5,
+						y = 150,
+						z = (Math.random() - 0.5) * 5
+
+					const geometry = new THREE.BoxGeometry(1, 1, 1)
+					const material = new THREE.MeshLambertMaterial({ color: 0x00ff00 })
+					const box_three = new THREE.Mesh(geometry, material)
+					const box_object = new ExtendedObject3D();
+					box_object.add(box_three)
+					box_object.name = "CONSUMABLE " + i
+					box_object.position.set(x, y, z)
+					this.add.existing(box_object)
+					this.physics.add.existing(box_object)
 
 				}
 			}, 1000)
