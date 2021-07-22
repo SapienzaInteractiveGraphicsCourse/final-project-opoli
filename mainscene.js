@@ -367,9 +367,11 @@ class MainScene extends Scene3D {
 
 		const addCity = async () => {
 			var material_grass = new THREE.MeshStandardMaterial();
+			var tex_map;
 			const texture_grass = new THREE.TextureLoader().load( './textures/grass.jpeg', (texture) => {
 				material_grass.map = texture;
 				material_grass.needsUpdate = true;
+				tex_map = texture;
 			} );
 			
 
@@ -386,7 +388,8 @@ class MainScene extends Scene3D {
 			city.traverse(child => {
 				if (child.isMesh) {
 					if (child.name.includes("Green")) {
-						child.material = material_grass
+						child.material.map = tex_map
+						child.material.map.needsUpdate = true
 						console.log(child)
 	
 					}
