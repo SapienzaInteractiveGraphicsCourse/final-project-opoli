@@ -273,9 +273,9 @@ class MainScene extends Scene3D {
 	old_ang = new Vector3(0, 0, 0);
 	old_speed_y = 0;
 	oldTime = -0.007;
-	control = -9.81;
 	fuel = 3000;
 	gauge = null;
+	max_speed_y = 15;
 
 	applyTweens(key) {
 		inputs[key] = true;
@@ -298,9 +298,9 @@ class MainScene extends Scene3D {
 		if (inputs.e) tweens.e = new TWEEN.Tween(this.ang_speed).to({ y: -Math.PI }, time_yaw).start().easing(ease_func_up)
 		if (inputs.q) tweens.q = new TWEEN.Tween(this.ang_speed).to({ y: Math.PI }, time_yaw).start().easing(ease_func_up)
 		if (throttle_control) return;
-		if (inputs[" "] && this.speed.y < 20 && !tweens[" "]) {
+		if (inputs[" "] && this.speed.y < this.max_speed_y && !tweens[" "]) {
 			tweens[" "] = new TWEEN.Tween(this.speed).to({ y: '+10' }, time_up).start().easing(ease_func_up).onUpdate(() => {
-				if (this.speed.y < 20) return;
+				if (this.speed.y < this.max_speed_y) return;
 				tweens[" "].stop();
 				tweens[" "] = null;
 			});
@@ -338,10 +338,10 @@ class MainScene extends Scene3D {
 
 			city.traverse(child => {
 				if (child.isMesh) {
-					if(child.name.includes("Cyan")) {
-						console.log(child.name)
-						console.log(child.material.color.setHex(0x0000ff))
-					}	
+					if (child.name.includes("Cyan")) {
+						// console.log(child.name)
+						// console.log(child.material.color.setHex(0x0000ff))
+					}
 					child.castShadow = child.receiveShadow = true;
 					child.material.metalness = 0
 					child.material.roughness = 1
@@ -372,7 +372,6 @@ class MainScene extends Scene3D {
 			this.drone.traverse(child => {
 				if (child.isMesh) {
 					child.castShadow = child.receiveShadow = true;
-					// https://discourse.threejs.org/t/cant-export-material-from-blender-gltf/12258
 					child.material.roughness = 1
 					child.material.metalness = 0
 					if (child.name === "PropellerFR") {
@@ -396,47 +395,10 @@ class MainScene extends Scene3D {
 					}
 				}
 			})
-			this.physics.add.existing(this.droneElements.propellerFL, { shape: 'hull', mass: 0.01 });
-			this.physics.add.existing(this.droneElements.propellerBR, { shape: 'hull', mass: 0.01 });
-			this.physics.add.existing(this.droneElements.propellerBL, { shape: 'hull', mass: 0.01 });
-			this.physics.add.existing(this.droneElements.propellerFR, { shape: 'hull', mass: 0.01 });
-
-			this.droneElements.propellerFL.parent.remove(this.droneElements.propellerFL)
-			this.droneElements.propellerBR.parent.remove(this.droneElements.propellerBR)
-			this.droneElements.propellerBL.parent.remove(this.droneElements.propellerBL)
-			this.droneElements.propellerFR.parent.remove(this.droneElements.propellerFR)
-
-
 			this.add.existing(this.drone)
 			this.physics.add.existing(this.drone, {
 				shape: 'hull',
 				mass: 1
-			})
-			this.drone.children[0].children[6].add(this.droneElements.propellerFL)
-			this.drone.children[0].children[6].add(this.droneElements.propellerFR)
-			this.drone.children[0].children[6].add(this.droneElements.propellerBL)
-			this.drone.children[0].children[6].add(this.droneElements.propellerBR)
-			const hinge_y = 0.15
-			this.h1 = this.physics.add.constraints.hinge(this.drone.body, this.droneElements.propellerFR.body, {
-				pivotA: { x: -0.81, y: hinge_y, z: 0.695 },
-				axisA: { y: 1 },
-				axisB: { x: -1 }
-			})
-			// this.h1.enableAngularMotor(true, 10, 0.25)
-			this.physics.add.constraints.hinge(this.drone.body, this.droneElements.propellerFL.body, {
-				pivotA: { x: 0.81, y: hinge_y, z: 0.695 },
-				axisA: { y: 1 },
-				axisB: { x: 1 }
-			})
-			this.physics.add.constraints.hinge(this.drone.body, this.droneElements.propellerBR.body, {
-				pivotA: { x: -0.81, y: hinge_y, z: -0.675 },
-				axisA: { y: 1 },
-				axisB: { x: 1 }
-			})
-			this.physics.add.constraints.hinge(this.drone.body, this.droneElements.propellerBL.body, {
-				pivotA: { x: 0.81, y: hinge_y, z: -0.675 },
-				axisA: { y: 1 },
-				axisB: { x: -1 }
 			})
 
 			this.drone.body.checkCollisions = true;
@@ -446,11 +408,13 @@ class MainScene extends Scene3D {
 
 				} else if (otherObj.name === "PropellerFR" || otherObj.name === "PropellerFL" || otherObj.name === "PropellerBR" || otherObj.name === "PropellerBL") {
 
-				} else if (new Vector3(this.drone.body.velocity.x, this.drone.body.velocity.y, this.drone.body.velocity.z).length() > 90) {
+				} else if (new Vector3(this.drone.body.velocity.x, this.drone.body.velocity.y, this.drone.body.velocity.z).length() > 8) {
 					this.freefall = true;
 					this.drone.body.setAngularFactor(1, 1, 1)
-					this.drone.body.setGravity(0, -9.81, 0)
+					// this.drone.body.setGravity(0, -9.81, 0)
 					console.log('il drone è diventato matteo germano')
+					new TWEEN.Tween(this.speed).to({ x: 0, y: 0, z: 0 }, time_up).start().easing(ease_func_up)
+					new TWEEN.Tween(this.ang_speed).to({ y: 0 }, time_yaw).start().easing(ease_func_up)
 				}
 			})
 
@@ -601,61 +565,49 @@ class MainScene extends Scene3D {
 
 			this.thirdPersonCamera.Update(delta, this.theta, this.phi);
 
-			this.ang.y += this.ang_speed.y * delta;
-
-			var d_ang = new Vector3(this.ang.x - this.old_ang.x, this.ang.y - this.old_ang.y, this.ang.z - this.old_ang.z)
+			this.ang.y += this.ang_speed.y * delta * Math.min(this.speed.y / this.max_speed_y * 2, 1);
+			var d_ang = new Vector3(this.ang.x * Math.min(this.speed.y / this.max_speed_y * 2, 1) - this.old_ang.x, this.ang.y - this.old_ang.y, this.ang.z * Math.min(this.speed.y / this.max_speed_y * 2, 1) - this.old_ang.z)
 			const d_speed_y = this.speed.y - this.old_speed_y;
-			if (this.freefall) {
-				d_ang = new Vector3(0, 0, 0);
-				this.speed = new Vector3(0, 0, 0);
-			}
-			this.drone.body.setAngularVelocityY(d_ang.y / delta);
 
 
 			let cos_rot_y, sin_rot_y;
 			cos_rot_y = Math.cos(this.ang.y)
 			sin_rot_y = Math.sin(this.drone.rotation.y);
-			this.drone.body.setAngularVelocityX(cos_rot_y * d_ang.x / delta + sin_rot_y * d_ang.z / delta);
-			this.drone.body.setAngularVelocityZ(cos_rot_y * d_ang.z / delta - sin_rot_y * d_ang.x / delta);
-
-			this.drone.body.setVelocityX(cos_rot_y * this.speed.x + sin_rot_y * this.speed.z);
-			this.drone.body.setVelocityZ(cos_rot_y * this.speed.z - sin_rot_y * this.speed.x);
-			if (this.speed.y > 8) this.control = d_speed_y / delta;
-			else this.control = -9.81 + this.speed.y
-			if (!this.freefall) {
-				this.drone.body.setGravity(0, this.control, 0)
-				this.droneElements.propellerFR.body.setGravity(0, this.control, 0)
-				this.droneElements.propellerFL.body.setGravity(0, this.control, 0)
-				this.droneElements.propellerBR.body.setGravity(0, this.control, 0)
-				this.droneElements.propellerBL.body.setGravity(0, this.control, 0)
-			}
 
 			// propellers
 
-			const p_speed = this.speed.y;
+			const p_speed = this.speed.y * 10;
+			if (!this.freefall) {
+				this.drone.body.applyForceY(p_speed * delta / 5)
+				this.drone.body.setAngularVelocityY(d_ang.y / delta);
+				this.drone.body.setAngularVelocityX((cos_rot_y * d_ang.x + sin_rot_y * d_ang.z) / delta);
+				this.drone.body.setAngularVelocityZ((cos_rot_y * d_ang.z - sin_rot_y * d_ang.x) / delta);
 
-			this.p_speed_p.x = -this.ang.x * 10;
-			this.p_speed_p.y = -this.ang.x * 10;
-			this.p_speed_p.z = this.ang.x * 10;
-			this.p_speed_p.w = this.ang.x * 10;
-			this.p_speed_r.x = -this.ang.z * 10;
-			this.p_speed_r.y = this.ang.z * 10;
-			this.p_speed_r.z = -this.ang.z * 10;
-			this.p_speed_r.w = this.ang.z * 10;
-			this.p_speed_y.x = this.ang_speed.y * 0.25;
-			this.p_speed_y.y = -this.ang_speed.y * 0.25;
-			this.p_speed_y.z = -this.ang_speed.y * 0.25;
-			this.p_speed_y.w = this.ang_speed.y * 0.25;
+				this.drone.body.setVelocityX((cos_rot_y * this.speed.x + sin_rot_y * this.speed.z) * Math.min(this.speed.y / this.max_speed_y * 2, 1));
+				this.drone.body.setVelocityZ((cos_rot_y * this.speed.z - sin_rot_y * this.speed.x) * Math.min(this.speed.y / this.max_speed_y * 2, 1));
+			}
 
-			this.droneElements.propellerFR.body.setAngularVelocityY(-(p_speed + this.p_speed_p.x + this.p_speed_r.x + this.p_speed_y.x));
-			this.droneElements.propellerFL.body.setAngularVelocityY(p_speed + this.p_speed_p.y + this.p_speed_r.y + this.p_speed_y.y);
-			this.droneElements.propellerBR.body.setAngularVelocityY(p_speed + this.p_speed_p.z + this.p_speed_r.z + this.p_speed_y.z);
-			this.droneElements.propellerBL.body.setAngularVelocityY(-(p_speed + this.p_speed_p.w + this.p_speed_r.w + this.p_speed_y.w));
+			this.p_speed_p.x = -d_ang.x / delta;
+			this.p_speed_p.y = -d_ang.x / delta;
+			this.p_speed_p.z = d_ang.x / delta;
+			this.p_speed_p.w = d_ang.x / delta;
+			this.p_speed_r.x = -d_ang.z / delta;
+			this.p_speed_r.y = d_ang.z / delta;
+			this.p_speed_r.z = -d_ang.z / delta;
+			this.p_speed_r.w = d_ang.z / delta;
+			this.p_speed_y.x = -this.ang_speed.y * 0.25;
+			this.p_speed_y.y = this.ang_speed.y * 0.25;
+			this.p_speed_y.z = this.ang_speed.y * 0.25;
+			this.p_speed_y.w = -this.ang_speed.y * 0.25;
 
-			//console.log(this.control);
+			this.droneElements.propellerFR.rotation.y -= (p_speed + this.p_speed_p.x + this.p_speed_r.x + this.p_speed_y.x) * delta;
+			this.droneElements.propellerFL.rotation.y -= (p_speed + this.p_speed_p.y + this.p_speed_r.y + this.p_speed_y.y) * delta;
+			this.droneElements.propellerBR.rotation.y -= (p_speed + this.p_speed_p.z + this.p_speed_r.z + this.p_speed_y.z) * delta;
+			this.droneElements.propellerBL.rotation.y -= (p_speed + this.p_speed_p.w + this.p_speed_r.w + this.p_speed_y.w) * delta;
+
 
 			this.drone.body.needUpdate = true;
-			this.old_ang.set(this.ang.x, this.ang.y, this.ang.z);
+			this.old_ang.set(this.ang.x * Math.min(this.speed.y / this.max_speed_y * 2, 1), this.ang.y, this.ang.z * Math.min(this.speed.y / this.max_speed_y * 2, 1));
 			this.old_speed_y = this.speed.y;
 
 			//rain
