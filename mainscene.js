@@ -368,12 +368,19 @@ class MainScene extends Scene3D {
 		const addCity = async () => {
 			var material_grass = new THREE.MeshStandardMaterial();
 			var tex_map;
-			const texture_grass = new THREE.TextureLoader().load( './textures/grass.jpeg', (texture) => {
+			const texture_grass = new THREE.TextureLoader().load('./textures/grass.jpeg', (texture) => {
 				material_grass.map = texture;
 				material_grass.needsUpdate = true;
-				tex_map = texture;
-			} );
-			
+				tex_map = texture
+				tex_map.wrapS = THREE.RepeatWrapping;
+				tex_map.wrapT = THREE.RepeatWrapping;
+
+				tex_map.repeat.set(1, 1);
+
+				tex_map.anisotropy = 4;
+				console.log(tex_map)
+			});
+
 
 			const object = await this.load.gltf('city')
 			const scene = object.scenes[0]
@@ -388,10 +395,10 @@ class MainScene extends Scene3D {
 			city.traverse(child => {
 				if (child.isMesh) {
 					if (child.name.includes("Green")) {
-						child.material.map = tex_map
+						child.material.color.setHex(0xffffff);
+						child.material.map = tex_map;
 						child.material.map.needsUpdate = true
-						console.log(child)
-	
+
 					}
 					child.castShadow = child.receiveShadow = true;
 					child.material.metalness = 0
@@ -564,7 +571,7 @@ class MainScene extends Scene3D {
 		});
 
 		loadSounds()
-		
+
 	}
 
 	blink_color = 0x000000;
