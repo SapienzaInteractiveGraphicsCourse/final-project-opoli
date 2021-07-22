@@ -225,6 +225,31 @@ class MainScene extends Scene3D {
 			//audioLoader = new THREE.AudioLoader();
 		}
 
+		//rain
+		{
+			let rain, rainGeo, rainCount = 15000;
+			const points = [];
+			for (let i = 0; i < rainCount; i++) {
+				let rainDrop = new THREE.Vector3(
+					Math.random() * 400 - 200,
+					Math.random() * 500 - 250,
+					Math.random() * 400 - 200
+				);
+				rainDrop.velocity = {};
+				rainDrop.velocity = 0;
+				points.push(rainDrop);
+			}
+			rainGeo = new THREE.BufferGeometry().setFromPoints(points);
+			let rainMaterial = new THREE.PointsMaterial({
+				color: 0xaaaaaa,
+				size: 0.1,
+				transparent: true
+			});
+			rain = new THREE.Points(rainGeo, rainMaterial);
+			this.add.existing(rain);
+			this.rain = rain;
+		}
+
 		// this.physics.collisionEvents.on('collision', data => {
 		// 	const { bodies, event } = data
 		// 	console.log(bodies[0].name, bodies[1].name, event)
@@ -313,6 +338,10 @@ class MainScene extends Scene3D {
 
 			city.traverse(child => {
 				if (child.isMesh) {
+					if(child.name.includes("Cyan")) {
+						console.log(child.name)
+						console.log(child.material.color.setHex(0x0000ff))
+					}	
 					child.castShadow = child.receiveShadow = true;
 					child.material.metalness = 0
 					child.material.roughness = 1
@@ -628,6 +657,20 @@ class MainScene extends Scene3D {
 			this.drone.body.needUpdate = true;
 			this.old_ang.set(this.ang.x, this.ang.y, this.ang.z);
 			this.old_speed_y = this.speed.y;
+
+			//rain
+
+			const vertex = new THREE.Vector3();
+			var positionAttribute = this.rain.geometry.getAttribute('position');
+			for (var i = 0; i < positionAttribute.count; i++) {
+				vertex.fromBufferAttribute(positionAttribute, i);
+				vertex.y -= 1;
+				if (vertex.y < - 200) {
+					vertex.y = 200;
+				}
+				positionAttribute.setXYZ(i, vertex.x, vertex.y, vertex.z);
+			}
+			positionAttribute.needsUpdate = true;
 
 			TWEEN.update();
 
