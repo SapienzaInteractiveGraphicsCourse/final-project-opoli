@@ -12,8 +12,8 @@ const {
 import TWEEN, { Easing, Tween } from './libs/tween.esm.js';
 import { AxesHelper, BoxGeometry, LineBasicMaterial, Mesh, MeshPhongMaterial, MultiplyOperation, Vector3 } from './three.js-master/build/three.module.js';
 import { PointerLockControls } from './three.js-master/examples/jsm/controls/PointerLockControls.js';
-import {CSM} from './three.js-master/examples/jsm/csm/CSM.js'
-import {CSMHelper} from './three.js-master/examples/jsm/csm/CSMHelper.js'
+import { CSM } from './three.js-master/examples/jsm/csm/CSM.js'
+import { CSMHelper } from './three.js-master/examples/jsm/csm/CSMHelper.js'
 
 // /**
 //  * Is touch device?
@@ -183,7 +183,7 @@ class MainScene extends Scene3D {
 			this.camera = new THREE.PerspectiveCamera(60, this.camera.aspect, 0.1, 1000);
 
 
-			
+
 
 			this.radius = 5;
 			this.theta = 0;
@@ -199,18 +199,18 @@ class MainScene extends Scene3D {
 			})
 
 			// csm
-			this.renderer.shadowMap.enabled = true;
-			this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // or any other type of shadowmap
-			this.csm = new CSM({
-				maxFar: this.camera.far,
-				cascades: 4,
-				shadowMapSize: 1024,
-				lightDirection: new THREE.Vector3(1, 1, 1).normalize(),
-				camera: this.camera,
-				parent: this.scene
-			});
-			let material = new THREE.MeshPhongMaterial(); // works with Phong and Standard materials
-			this.csm.setupMaterial(material); // must be called to pass all CSM-related uniforms to the shader
+			// this.renderer.shadowMap.enabled = true;
+			// this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // or any other type of shadowmap
+			// this.csm = new CSM({
+			// 	maxFar: this.camera.far,
+			// 	cascades: 4,
+			// 	shadowMapSize: 1024,
+			// 	lightDirection: new THREE.Vector3(1, 1, 1).normalize(),
+			// 	camera: this.camera,
+			// 	parent: this.scene
+			// });
+			// let material = new THREE.MeshPhongMaterial(); // works with Phong and Standard materials
+			// this.csm.setupMaterial(material); // must be called to pass all CSM-related uniforms to the shader
 
 
 
@@ -343,7 +343,7 @@ class MainScene extends Scene3D {
 		const intensity = 0.65
 		hemisphereLight.intensity = intensity
 		ambientLight.intensity = intensity
-		directionalLight.intensity = 0
+		directionalLight.intensity = intensity
 
 
 
@@ -434,13 +434,13 @@ class MainScene extends Scene3D {
 					this.collisionDrone();
 					console.log('COLLISIONE')
 
-					if(this.lives == 0) {
+					if (this.lives == 0) {
 						this.freefall = true;
 						this.drone.body.setAngularFactor(1, 1, 1)
 						new TWEEN.Tween(this.speed).to({ x: 0, y: 0, z: 0 }, time_up).start().easing(ease_func_up)
 						new TWEEN.Tween(this.ang_speed).to({ y: 0 }, time_yaw).start().easing(ease_func_up)
 					}
-					
+
 				}
 			})
 
@@ -526,7 +526,7 @@ class MainScene extends Scene3D {
 		});
 
 		loadSounds()
-
+		console.log(this);
 	}
 
 	blink_color = 0x000000;
@@ -535,7 +535,7 @@ class MainScene extends Scene3D {
 	collisionDrone() {
 		function changeColor(context, times, color) {
 			//console.log("TIMES TO BLINK: "+times)
-			if(times == 0) return;
+			if (times == 0) return;
 
 			context.droneElements.propellerBL.material.transparent = true;
 			context.droneElements.propellerFL.material.transparent = true;
@@ -548,14 +548,14 @@ class MainScene extends Scene3D {
 
 			context.drone.children[0].material.transparent = true;
 			context.drone.children[0].material.opacity = color;
-			if(color == 1) {
-				setTimeout(function () {changeColor(context, times-1, 0)}, 500);
+			if (color == 1) {
+				setTimeout(function () { changeColor(context, times - 1, 0) }, 500);
 			} else {
-				setTimeout(function () {changeColor(context, times-1, 1)}, 500);
+				setTimeout(function () { changeColor(context, times - 1, 1) }, 500);
 			}
 		}
 
-		if(this.lives > 0) this.lives -= 1;
+		if (this.lives > 0) this.lives -= 1;
 		new Noty({
 			type: 'warning',
 			layout: 'topRight',
@@ -567,9 +567,9 @@ class MainScene extends Scene3D {
 			killer: true,
 		}).show();
 
-		if(this.lives > 0) {
+		if (this.lives > 0) {
 			var context = this;
-			setTimeout(function () {changeColor(context, 6, 0x000000)}, 500);
+			setTimeout(function () { changeColor(context, 6, 0x000000) }, 500);
 		} else {
 			new Noty({
 				type: 'error',
@@ -582,20 +582,20 @@ class MainScene extends Scene3D {
 				killer: true,
 			}).show();
 		}
-		
+
 	}
 
 	shiftRain(isRaining) {
 		this.isRaining = isRaining;
 		console.log("Is raining: " + isRaining);
-		if(isRaining) {
+		if (isRaining) {
 			document.getElementById("rainbutton").src = './menu/rain.png';
 		} else {
 			document.getElementById("rainbutton").src = './menu/sun.png';
 		}
 
 		let context = this;
-		setTimeout(function () {context.shiftRain(!isRaining)}, Math.random() * (20000 - 5000) + 5000)
+		setTimeout(function () { context.shiftRain(!isRaining) }, Math.random() * (20000 - 5000) + 5000)
 	}
 
 	p_speed_p = new THREE.Vector4(0, 0, 0, 0);
@@ -604,6 +604,15 @@ class MainScene extends Scene3D {
 	update(time) {
 		const delta = time - this.oldTime
 		this.oldTime = time;
+		if (delta >= project.projectConfig.maxSubSteps * project.projectConfig.fixedTimeStep) {
+			console.log(project.projectConfig.maxSubSteps);
+			console.log('1/', 1 / project.projectConfig.fixedTimeStep);
+			project.projectConfig.maxSubSteps *= 2
+			project.projectConfig.fixedTimeStep *= 2
+		} else if (delta < project.projectConfig.maxSubSteps * project.projectConfig.fixedTimeStep / 4) {
+			project.projectConfig.maxSubSteps /= 2
+			project.projectConfig.fixedTimeStep /= 2
+		}
 		if (this.drone && this.drone.body && this.thirdPersonCamera) {
 			if (!this.gameStarted) {
 				this.shiftRain(false);
@@ -672,7 +681,9 @@ class MainScene extends Scene3D {
 
 			const p_speed = this.speed.y * 10;
 			if (!this.freefall) {
-				this.drone.body.applyForceY(p_speed * delta / 15)
+				this.drone.body.applyForceY(p_speed * delta / 10 + d_speed_y)
+				// this.drone.body.applyForceY(p_speed)
+				this.drone.body.applyForceY(-this.drone.body.velocity.y * 0.001)
 				this.drone.body.setAngularVelocityY(d_ang.y / delta);
 				this.drone.body.setAngularVelocityX((cos_rot_y * d_ang.x + sin_rot_y * d_ang.z) / delta);
 				this.drone.body.setAngularVelocityZ((cos_rot_y * d_ang.z - sin_rot_y * d_ang.x) / delta);
@@ -694,10 +705,10 @@ class MainScene extends Scene3D {
 			this.p_speed_y.z = this.ang_speed.y * 0.25;
 			this.p_speed_y.w = -this.ang_speed.y * 0.25;
 
-			this.droneElements.propellerFR.rotation.y -= (p_speed + this.p_speed_p.x + this.p_speed_r.x + this.p_speed_y.x) * delta;
-			this.droneElements.propellerFL.rotation.y -= (p_speed + this.p_speed_p.y + this.p_speed_r.y + this.p_speed_y.y) * delta;
-			this.droneElements.propellerBR.rotation.y -= (p_speed + this.p_speed_p.z + this.p_speed_r.z + this.p_speed_y.z) * delta;
-			this.droneElements.propellerBL.rotation.y -= (p_speed + this.p_speed_p.w + this.p_speed_r.w + this.p_speed_y.w) * delta;
+			this.droneElements.propellerFR.rotation.y -= (p_speed + d_speed_y + this.p_speed_p.x + this.p_speed_r.x + this.p_speed_y.x) * delta;
+			this.droneElements.propellerFL.rotation.y -= (p_speed + d_speed_y + this.p_speed_p.y + this.p_speed_r.y + this.p_speed_y.y) * delta;
+			this.droneElements.propellerBR.rotation.y -= (p_speed + d_speed_y + this.p_speed_p.z + this.p_speed_r.z + this.p_speed_y.z) * delta;
+			this.droneElements.propellerBL.rotation.y -= (p_speed + d_speed_y + this.p_speed_p.w + this.p_speed_r.w + this.p_speed_y.w) * delta;
 
 
 			this.drone.body.needUpdate = true;
@@ -705,7 +716,7 @@ class MainScene extends Scene3D {
 			this.old_speed_y = this.speed.y;
 
 			//rain
-			if(this.isRaining) {
+			if (this.isRaining) {
 				const vertex = new THREE.Vector3();
 				var positionAttribute = this.rain.geometry.getAttribute('position');
 				for (var i = 0; i < positionAttribute.count; i++) {
@@ -718,19 +729,19 @@ class MainScene extends Scene3D {
 				}
 				positionAttribute.needsUpdate = true;
 			}
-			
-			TWEEN.update();
-			
-			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Flight Time: " + Math.round(time) + "s <br>" + "Lives: <span style='color: red'>"+"♥".repeat(this.lives)+"</span>";
 
-			this.csm.update(this.camera.matrix);
+			TWEEN.update();
+
+			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Flight Time: " + Math.round(time) + "s <br>" + "Lives: <span style='color: red'>" + "♥".repeat(this.lives) + "</span>";
+
+			// this.csm.update(this.camera.matrix);
 		}
 	}
 }
-
+var project;
 window.addEventListener('load', () => {
 	PhysicsLoader('./libs/ammo_new', () => {
-		const project = new Project({ antialias: true, maxSubSteps: 10, fixedTimeStep: 1 / 120, scenes: [MainScene] })
+		project = new Project({ antialias: true, maxSubSteps: 1, fixedTimeStep: 1 / 960, scenes: [MainScene] })
 
 		const destination = document.getElementById('drone')
 		destination.appendChild(project.canvas)
@@ -748,6 +759,7 @@ window.addEventListener('load', () => {
 			project.camera.aspect = newWidth / newHeight;
 			project.camera.updateProjectionMatrix();
 		}
+		console.log(project);
 
 		window.onresize = resize;
 		resize();
