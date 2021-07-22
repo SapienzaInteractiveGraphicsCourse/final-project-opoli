@@ -586,8 +586,24 @@ class MainScene extends Scene3D {
 	}
 
 	shiftRain(isRaining) {
+		if(isRaining) {
+			this.rain.material.opacity = 1
+		} else {
+			this.rain.material.opacity = 0
+		}
 		this.isRaining = isRaining;
-		console.log("Is raining: " + isRaining);
+		
+		new Noty({
+			type: 'info',
+			layout: 'topRight',
+			theme: 'nest',
+			text: isRaining?"It's raining...":"The rain has stopped.",
+			timeout: '3000',
+			progressBar: true,
+			closeWith: ['click'],
+			killer: true,
+		}).show();
+		
 		if(isRaining) {
 			document.getElementById("rainbutton").src = './menu/rain.png';
 		} else {
@@ -672,7 +688,7 @@ class MainScene extends Scene3D {
 
 			const p_speed = this.speed.y * 10;
 			if (!this.freefall) {
-				this.drone.body.applyForceY(p_speed * delta / 15)
+				this.drone.body.applyForceY(0.08)
 				this.drone.body.setAngularVelocityY(d_ang.y / delta);
 				this.drone.body.setAngularVelocityX((cos_rot_y * d_ang.x + sin_rot_y * d_ang.z) / delta);
 				this.drone.body.setAngularVelocityZ((cos_rot_y * d_ang.z - sin_rot_y * d_ang.x) / delta);
