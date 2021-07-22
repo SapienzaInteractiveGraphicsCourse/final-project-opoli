@@ -592,10 +592,6 @@ class MainScene extends Scene3D {
 			this.rain.material.opacity = 0
 		}
 		this.isRaining = isRaining;
-<<<<<<< HEAD
-		console.log("Is raining: " + isRaining);
-		if (isRaining) {
-=======
 		
 		new Noty({
 			type: 'info',
@@ -609,7 +605,6 @@ class MainScene extends Scene3D {
 		}).show();
 		
 		if(isRaining) {
->>>>>>> 75bb632615b83ea26e722bea037386e2f6c18473
 			document.getElementById("rainbutton").src = './menu/rain.png';
 		} else {
 			document.getElementById("rainbutton").src = './menu/sun.png';
