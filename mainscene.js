@@ -122,6 +122,23 @@ const sounds = {
 	drone: { url: './sounds/drone.mp3' },
 }
 
+const droneColors = ["red", "black", "blue", "green", "white"];
+var chosenColors = [3, 4]; //1st drone, 2nd propellers
+
+function colorToHex(color) {
+	if (color == "red") {
+		return 0xff0000;
+	} else if (color == "black") {
+		return 0x000000;
+ 	} else if (color == "blue") {
+		return 0x0000ff;
+	} else if (color == "green") {
+		return 0x00ff00;
+	} else if (color == "white") {
+		return 0xffffff;
+	}
+}
+
 function loadSounds() {
 	const soundsLoaderMngr = new THREE.LoadingManager();
 	soundsLoaderMngr.onLoad = () => {
@@ -418,6 +435,8 @@ class MainScene extends Scene3D {
 						child.material.map.needsUpdate = true
 						child.material.normalMap.needsUpdate = true
 
+					} else if (child.name.includes("Pink") || child.name.includes("Magenta")) {
+						console.log(child.name)
 					} else if (child.name.includes("Cyan")) {
 						var water = new Water(child.geometry, {
 							textureWidth: 2048,
@@ -472,6 +491,7 @@ class MainScene extends Scene3D {
 			this.drone.add(drone)
 			this.drone.add(new AxesHelper(2));
 			this.drone.position.set(35, 1, 0)
+			this.drone.children[0].material.color.setHex(colorToHex(droneColors[chosenColors[0]]))
 			// add shadow
 			this.drone.traverse(child => {
 				if (child.isMesh) {
@@ -480,19 +500,19 @@ class MainScene extends Scene3D {
 					child.material.metalness = 0
 					if (child.name === "PropellerFR") {
 						this.droneElements.propellerFR = child;
-						child.material.color.setHex(0x000000)
+						child.material.color.setHex(colorToHex(droneColors[chosenColors[1]]))
 					}
 					if (child.name === "PropellerFL") {
 						this.droneElements.propellerFL = child;
-						child.material.color.setHex(0x000000)
+						child.material.color.setHex(colorToHex(droneColors[chosenColors[1]]))
 					}
 					if (child.name === "PropellerBR") {
 						this.droneElements.propellerBR = child;
-						child.material.color.setHex(0x000000)
+						child.material.color.setHex(colorToHex(droneColors[chosenColors[1]]))
 					}
 					if (child.name === "PropellerBL") {
 						this.droneElements.propellerBL = child;
-						child.material.color.setHex(0x000000)
+						child.material.color.setHex(colorToHex(droneColors[chosenColors[1]]))
 					}
 					if (child.name === "propellers_axes") {
 						this.droneElements.propellers_axes = child
@@ -518,6 +538,14 @@ class MainScene extends Scene3D {
 				} else if (new Vector3(this.drone.body.velocity.x, this.drone.body.velocity.y, this.drone.body.velocity.z).length() > 8) {
 					this.collisionDrone();
 					console.log('COLLISIONE FORTE')
+
+					context.drone.body.setCollisionFlags(2);
+					context.drone.position.setY(100);
+					context.drone.body.needUpdate = true;
+					context.drone.body.once.update(() => {
+						context.drone.body.setCollisionFlags(0);
+						context.drone.body.setVelocity(0, 0, 0);
+					})
 
 					if (this.lives == 0) {
 						this.freefall = true;
