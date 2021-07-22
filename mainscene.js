@@ -531,6 +531,7 @@ class MainScene extends Scene3D {
 
 	blink_color = 0x000000;
 	lives = 3;
+	isRaining = false;
 	collisionDrone() {
 		function changeColor(context, times, color) {
 			console.log("TIMES TO BLINK: "+times)
@@ -566,6 +567,19 @@ class MainScene extends Scene3D {
 		
 	}
 
+	shiftRain(isRaining) {
+		this.isRaining = isRaining;
+		console.log("Is raining: " + isRaining);
+		if(isRaining) {
+			document.getElementById("rainbutton").src = './menu/rain.png';
+		} else {
+			document.getElementById("rainbutton").src = './menu/sun.png';
+		}
+
+		let context = this;
+		setTimeout(function () {context.shiftRain(!isRaining)}, Math.random() * (20000 - 5000) + 5000)
+	}
+
 	p_speed_p = new THREE.Vector4(0, 0, 0, 0);
 	p_speed_r = new THREE.Vector4(0, 0, 0, 0);
 	p_speed_y = new THREE.Vector4(0, 0, 0, 0);
@@ -574,6 +588,7 @@ class MainScene extends Scene3D {
 		this.oldTime = time;
 		if (this.drone && this.drone.body && this.thirdPersonCamera) {
 			if (!this.gameStarted) {
+				this.shiftRain(false);
 				document.getElementById("menu").style.display = 'block';
 				document.getElementById("fuel").style.display = 'block';
 
@@ -674,19 +689,20 @@ class MainScene extends Scene3D {
 			this.old_speed_y = this.speed.y;
 
 			//rain
-
-			const vertex = new THREE.Vector3();
-			var positionAttribute = this.rain.geometry.getAttribute('position');
-			for (var i = 0; i < positionAttribute.count; i++) {
-				vertex.fromBufferAttribute(positionAttribute, i);
-				vertex.y -= 1;
-				if (vertex.y < - 200) {
-					vertex.y = 200;
+			if(this.isRaining) {
+				const vertex = new THREE.Vector3();
+				var positionAttribute = this.rain.geometry.getAttribute('position');
+				for (var i = 0; i < positionAttribute.count; i++) {
+					vertex.fromBufferAttribute(positionAttribute, i);
+					vertex.y -= 1;
+					if (vertex.y < - 200) {
+						vertex.y = 200;
+					}
+					positionAttribute.setXYZ(i, vertex.x, vertex.y, vertex.z);
 				}
-				positionAttribute.setXYZ(i, vertex.x, vertex.y, vertex.z);
+				positionAttribute.needsUpdate = true;
 			}
-			positionAttribute.needsUpdate = true;
-
+			
 			TWEEN.update();
 			
 			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Flight Time: " + Math.round(time) + "s <br>" + "Lives: <span style='color: red'>"+"♥".repeat(this.lives)+"</span>";
