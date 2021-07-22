@@ -951,7 +951,13 @@ class MainScene extends Scene3D {
 	}
 }
 var project;
-window.addEventListener('load', () => {
+
+document.getElementById("startbutton").addEventListener("click", () => {
+	document.getElementById("gameloader").style.display = 'none';
+	//playSoundTrack();
+	chosenColors[0] = droneColors.indexOf(document.getElementById("startbutton").getAttribute("data-drone-color"))
+	chosenColors[1] = droneColors.indexOf(document.getElementById("startbutton").getAttribute("data-propeller-color"))
+
 	PhysicsLoader('./libs/ammo_new', () => {
 		project = new Project({ antialias: true, maxSubSteps: 1, fixedTimeStep: 1 / 960, scenes: [MainScene], gravity: { x: 0, y: -9.81, z: 0 } })
 
@@ -975,4 +981,8 @@ window.addEventListener('load', () => {
 		window.onresize = resize;
 		resize();
 	})
+});
+
+window.addEventListener('load', () => {
+	
 })
