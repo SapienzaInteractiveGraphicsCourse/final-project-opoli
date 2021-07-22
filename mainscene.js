@@ -12,6 +12,8 @@ const {
 import TWEEN, { Easing, Tween } from './libs/tween.esm.js';
 import { AxesHelper, BoxGeometry, LineBasicMaterial, Mesh, MeshPhongMaterial, MultiplyOperation, Vector3 } from './three.js-master/build/three.module.js';
 import { PointerLockControls } from './three.js-master/examples/jsm/controls/PointerLockControls.js';
+import {CSM} from './three.js-master/examples/jsm/csm/CSM.js'
+import {CSMHelper} from './three.js-master/examples/jsm/csm/CSMHelper.js'
 
 // /**
 //  * Is touch device?
@@ -180,6 +182,9 @@ class MainScene extends Scene3D {
 		{
 			this.camera = new THREE.PerspectiveCamera(60, this.camera.aspect, 0.1, 1000);
 
+
+			
+
 			this.radius = 5;
 			this.theta = 0;
 			this.phi = Math.PI / 6;
@@ -192,6 +197,23 @@ class MainScene extends Scene3D {
 				target: null,
 				radius: this.radius
 			})
+
+			// csm
+			this.renderer.shadowMap.enabled = true;
+			this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // or any other type of shadowmap
+			this.csm = new CSM({
+				maxFar: this.camera.far,
+				cascades: 4,
+				shadowMapSize: 1024,
+				lightDirection: new THREE.Vector3(1, 1, 1).normalize(),
+				camera: this.camera,
+				parent: this.scene
+			});
+			let material = new THREE.MeshPhongMaterial(); // works with Phong and Standard materials
+			this.csm.setupMaterial(material); // must be called to pass all CSM-related uniforms to the shader
+
+
+
 
 			document.addEventListener('click', () => {
 				this.controls.lock();
@@ -321,7 +343,7 @@ class MainScene extends Scene3D {
 		const intensity = 0.65
 		hemisphereLight.intensity = intensity
 		ambientLight.intensity = intensity
-		directionalLight.intensity = intensity
+		directionalLight.intensity = 0
 
 
 
@@ -627,6 +649,8 @@ class MainScene extends Scene3D {
 			TWEEN.update();
 
 			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Flight Time: " + Math.round(time) + "s";
+
+			this.csm.update(this.camera.matrix);
 		}
 	}
 }
