@@ -10,8 +10,9 @@ const {
 	PointerDrag
 } = ENABLE3D
 import TWEEN, { Easing, Tween } from './libs/tween.esm.js';
-import { AxesHelper, BoxGeometry, LineBasicMaterial, Mesh, MeshPhongMaterial, MultiplyOperation, Plane, PlaneGeometry, Vector3 } from './three.js-master/build/three.module.js';
+import { AxesHelper, BoxGeometry, LineBasicMaterial, Mesh, MeshPhongMaterial, MultiplyOperation, Plane, PlaneGeometry, TextureLoader, Vector3 } from './three.js-master/build/three.module.js';
 import { PointerLockControls } from './three.js-master/examples/jsm/controls/PointerLockControls.js';
+import { Water } from './three.js-master/examples/js/objects/Water.js';
 import { CSM } from './three.js-master/examples/jsm/csm/CSM.js'
 import { CSMHelper } from './three.js-master/examples/jsm/csm/CSMHelper.js'
 
@@ -177,6 +178,7 @@ class MainScene extends Scene3D {
 
 	init() {
 		this.renderer.setPixelRatio(Math.max(1, window.devicePixelRatio / 2))
+		this.imageLoader = new TextureLoader();
 
 		// camera
 		{
@@ -337,43 +339,7 @@ class MainScene extends Scene3D {
 	}
 	droneElements = {};
 
-	loadWater() {
 
-		var geo = new THREE.PlaneBufferGeometry(15000,15000,10,10);  
-		
-		var c = directional.position.clone();
-	  
-		var normal = imageLoader.load('https://www.titansoftime.com/textures/water/waternormals.jpg');
-		
-		normal.wrapS = THREE.RepeatWrapping;
-		normal.wrapT = THREE.RepeatWrapping;  
-		
-		water = new THREE.Water(geo, {
-		  textureWidth: 2048,
-		  textureHeight: 2048,
-		  waterNormals: normal,
-		  alpha: 0.9,
-		  fog: true,
-		  distortionScale: 15.0,
-		  sunDirection: c.normalize(),
-		  sunColor: 0x7f7f7f,
-		  waterColor: 0x001e0f,
-		  side: THREE.DoubleSide
-		});
-		
-		water.rotation.x = - Math.PI * 0.5;
-	  
-		water.position.y = 85;
-	  
-		water.matrixAutoUpdate = false;
-		water.rotationAutoUpdate = false;
-		water.updateMatrix();
-	  
-		water.name = 'water';
-	  
-		scene.add(water);
-	  
-	  }
 
 	async create() {
 		const { lights } = await this.warpSpeed('-ground', '-orbitControls')
@@ -390,6 +356,7 @@ class MainScene extends Scene3D {
 		hemisphereLight.intensity = 0
 		ambientLight.intensity = intensity
 		directionalLight.intensity = intensity
+		this.directional = directionalLight
 
 		// ground
 		this.ground = new ExtendedObject3D()
@@ -407,7 +374,7 @@ class MainScene extends Scene3D {
 
 		const addCity = async () => {
 			var tex_map, tex_normal_map;
-			new THREE.TextureLoader().load('./textures/grass.jpeg', (texture) => {
+			this.imageLoader.load('./textures/grass.jpeg', (texture) => {
 				tex_map = texture
 				tex_map.wrapS = THREE.RepeatWrapping;
 				tex_map.wrapT = THREE.RepeatWrapping;
@@ -416,7 +383,7 @@ class MainScene extends Scene3D {
 
 				tex_map.anisotropy = 4;
 			});
-			new THREE.TextureLoader().load('./textures/grasslight-big-nm.jpg', (texture) => {
+			this.imageLoader.load('./textures/grasslight-big-nm.jpg', (texture) => {
 				tex_normal_map = texture
 				tex_normal_map.wrapS = THREE.RepeatWrapping;
 				tex_normal_map.wrapT = THREE.RepeatWrapping;
@@ -447,7 +414,9 @@ class MainScene extends Scene3D {
 						child.material.normalMap.needsUpdate = true
 
 					} else if (child.material.color.r === 0.5684522089150544) {
-							child.material.color.setRGB(0.752941, 0.752941, 0.752941)
+						child.material.color.setRGB(0.752941, 0.752941, 0.752941)
+					} else if (child.name.includes("Cyan")) {
+
 					}
 					child.castShadow = child.receiveShadow = true;
 					child.material.metalness = 0
@@ -618,28 +587,69 @@ class MainScene extends Scene3D {
 
 		}
 
-		addCity().then(() => {
-			addDrone();
+		const addWater = async () => {
 
-			// boxes 
-			setTimeout(() => {
-				for (let i = 0; i < 20; i++) {
-					const x = (Math.random() - 0.5) * 5,
-						y = 150,
-						z = (Math.random() - 0.5) * 5
+			var geo = new THREE.PlaneBufferGeometry(1000, 1000, 10, 10);
 
-					const geometry = new THREE.BoxGeometry(1, 1, 1)
-					const material = new THREE.MeshLambertMaterial({ color: 0x00ff00 })
-					const box_three = new THREE.Mesh(geometry, material)
-					const box_object = new ExtendedObject3D();
-					box_object.add(box_three)
-					box_object.name = "CONSUMABLE " + i
-					box_object.position.set(x, y, z)
-					this.add.existing(box_object)
-					this.physics.add.existing(box_object)
+			var c = this.directional.position.clone();
 
-				}
-			}, 1000)
+			var normal = this.imageLoader.load('./textures/waternormals.jpg');
+
+			normal.wrapS = THREE.RepeatWrapping;
+			normal.wrapT = THREE.RepeatWrapping;
+
+			var water = new Water(geo, {
+				textureWidth: 2048,
+				textureHeight: 2048,
+				waterNormals: normal,
+				alpha: 0.9,
+				fog: true,
+				distortionScale: 15.0,
+				sunDirection: c.normalize(),
+				sunColor: 0x7f7f7f,
+				waterColor: 0x001e0f,
+				side: THREE.DoubleSide
+			});
+
+			water.rotation.x = - Math.PI * 0.5;
+
+			water.position.y = -3.5;
+
+			water.matrixAutoUpdate = false;
+			water.rotationAutoUpdate = false;
+			water.updateMatrix();
+
+			water.name = 'water';
+			this.water = water;
+
+			this.add.existing(water);
+
+		}
+
+		addWater().then(() => {
+			addCity().then(() => {
+				addDrone().then(() => {
+					// boxes 
+					setTimeout(() => {
+						for (let i = 0; i < 20; i++) {
+							const x = (Math.random() - 0.5) * 5,
+								y = 150,
+								z = (Math.random() - 0.5) * 5
+
+							const geometry = new THREE.BoxGeometry(1, 1, 1)
+							const material = new THREE.MeshLambertMaterial({ color: 0x00ff00 })
+							const box_three = new THREE.Mesh(geometry, material)
+							const box_object = new ExtendedObject3D();
+							box_object.add(box_three)
+							box_object.name = "CONSUMABLE " + i
+							box_object.position.set(x, y, z)
+							this.add.existing(box_object)
+							this.physics.add.existing(box_object)
+
+						}
+					}, 1000)
+				});
+			})
 		})
 
 		loadSounds()
@@ -746,6 +756,11 @@ class MainScene extends Scene3D {
 			project.projectConfig.fixedTimeStep /= 2
 		}
 		if (this.drone && this.drone.body && this.thirdPersonCamera) {
+			if (this.water) {
+
+				this.water.material.uniforms.time.value += 0.5 * delta;
+
+			}
 			if (!this.gameStarted) {
 				this.shiftRain(false);
 				document.getElementById("menu").style.display = 'block';

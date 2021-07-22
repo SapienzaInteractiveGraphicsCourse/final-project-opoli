@@ -1,4 +1,4 @@
-( function () {
+
 
 	/**
  * Work based on :
@@ -6,8 +6,8 @@
  * http://www.adelphi.edu/~stemkoski : An implementation of water shader based on the flat mirror
  * http://29a.ch/ && http://29a.ch/slides/2012/webglwater/ : Water shader explanations in WebGL
  */
-
-	class Water extends THREE.Mesh {
+	 import * as THREE from '../../../build/three.module.js';
+	export class Water extends THREE.Mesh {
 
 		constructor( geometry, options = {} ) {
 
@@ -295,6 +295,3 @@
 
 	Water.prototype.isWater = true;
 
-	THREE.Water = Water;
-
-} )();
