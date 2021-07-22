@@ -366,6 +366,13 @@ class MainScene extends Scene3D {
 
 
 		const addCity = async () => {
+			var material_grass = new THREE.MeshStandardMaterial();
+			const texture_grass = new THREE.TextureLoader().load( './textures/grass.jpeg', (texture) => {
+				material_grass.map = texture;
+				material_grass.needsUpdate = true;
+			} );
+			
+
 			const object = await this.load.gltf('city')
 			const scene = object.scenes[0]
 
@@ -378,9 +385,10 @@ class MainScene extends Scene3D {
 
 			city.traverse(child => {
 				if (child.isMesh) {
-					if (child.name.includes("Cyan")) {
-						// console.log(child.name)
-						// console.log(child.material.color.setHex(0x0000ff))
+					if (child.name.includes("Green")) {
+						child.material = material_grass
+						console.log(child)
+	
 					}
 					child.castShadow = child.receiveShadow = true;
 					child.material.metalness = 0
@@ -553,7 +561,7 @@ class MainScene extends Scene3D {
 		});
 
 		loadSounds()
-		console.log(this);
+		
 	}
 
 	blink_color = 0x000000;
@@ -802,7 +810,6 @@ window.addEventListener('load', () => {
 			project.camera.aspect = newWidth / newHeight;
 			project.camera.updateProjectionMatrix();
 		}
-		console.log(project);
 
 		window.onresize = resize;
 		resize();
