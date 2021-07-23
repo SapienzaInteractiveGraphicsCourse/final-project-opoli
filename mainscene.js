@@ -121,6 +121,7 @@ const sounds = {
 	background: { url: './sounds/music.mp3' },
 	drone: { url: './sounds/drone.mp3' },
 	death: { url: './sounds/death.wav' },
+	win: { url: './sounds/win.wav' },
 	consumable: { url: './sounds/consumable.wav' },
 	hit: { url: './sounds/hit.wav' },
 }
@@ -184,6 +185,17 @@ function playDeathMusic() {
 		playSoundTrack();
 		helperSound.isPlaying = false;
 		helperSound.setBuffer(sounds.death.sound);
+		helperSound.setLoop(false);
+		helperSound.setVolume(0.3);
+		helperSound.play();
+	}
+}
+
+function playWinMusic() {
+	if (sound.isPlaying) {
+		playSoundTrack();
+		helperSound.isPlaying = false;
+		helperSound.setBuffer(sounds.win.sound);
 		helperSound.setLoop(false);
 		helperSound.setVolume(0.3);
 		helperSound.play();
@@ -465,6 +477,7 @@ class MainScene extends Scene3D {
 					} else if (child.name.includes("Pink") || child.name.includes("Magenta")) {
 						// console.log(child.name)
 					} else if (child.name.includes("Cyan")) {
+						/*
 						var water = new Water(child.geometry, {
 							textureWidth: 2048,
 							textureHeight: 2048,
@@ -489,6 +502,7 @@ class MainScene extends Scene3D {
 								p.add(water);
 							}
 						}
+						*/
 					} else if (child.material.color && child.material.color.r === 0.5684522089150544) {
 						child.material.color.setRGB(0.752941, 0.752941, 0.752941)
 					}
@@ -556,14 +570,36 @@ class MainScene extends Scene3D {
 						this.lives++;
 						this.hearts--;
 					} else if (otherObj.name.includes("coin")) {
-						this.collected_stars++;
+						this.collected_coins++;
 						this.coins--;
+
+						if (this.collected_coins >= 1) {
+							let difficulty_msg = "It was too easy, right? Retry with MEDIUM!";
+							if(difficulty == 1) {
+								difficulty_msg = "Good job, but you can do better. Try HARD!";
+							} else if(difficulty == 2) {
+								difficulty_msg = "WOW. You're a master of drones! You deserve to be a honored citizen of OPOLI."
+							}
+							new Noty({
+								type: 'success',
+								layout: 'center',
+								theme: 'nest',
+								text: 'You won. '+difficulty_msg,
+								timeout: '10000',
+								progressBar: true,
+								closeWith: ['click'],
+								killer: "winqueue",
+							}).show();
+							playWinMusic();
+							setTimeout(() => {location.reload()}, 10000)
+						}
 					} else if (otherObj.name.includes("tank")) {
 						this.tanks--;
 						this.fuel += 1000;
 					}
 
 				} else if (this.tooFast) {
+					if(event != "start") return;
 					this.collisionDrone();
 					console.log('COLLISIONE FORTE')
 
@@ -903,7 +939,7 @@ class MainScene extends Scene3D {
 
 	blink_color = 0x000000;
 	lives = 3;
-	collected_stars = 0;
+	collected_coins = 0;
 	isRaining = false;
 	collisionDrone() {
 		function changeColor(context, times, color) {
@@ -927,8 +963,8 @@ class MainScene extends Scene3D {
 			}
 		}
 
+		this.lives -= 1;
 		if (this.lives > 0) {
-			this.lives -= 1;
 			this.fuel = 3000;
 			var context = this;
 			setTimeout(function () { changeColor(context, 6, 0x000000) }, 500);
@@ -947,15 +983,16 @@ class MainScene extends Scene3D {
 		} else {
 			new Noty({
 				type: 'error',
-				layout: 'topRight',
+				layout: 'center',
 				theme: 'nest',
-				text: 'You died.',
-				timeout: '3000',
+				text: 'You died. Retry in 5 seconds...',
+				timeout: '5000',
 				progressBar: true,
 				closeWith: ['click'],
 				killer: true,
 			}).show();
 			playDeathMusic();
+			setTimeout(() => {location.reload()}, 5000)
 		}
 
 	}
@@ -1063,7 +1100,6 @@ class MainScene extends Scene3D {
 				if (this.fuel <= 0) this.collisionDrone()
 			}
 
-
 			this.thirdPersonCamera.Update(delta, this.theta, this.phi);
 
 			this.ang.y += this.ang_speed.y * delta * Math.min(this.speed.y / this.max_speed_y * 2, 1);
@@ -1137,7 +1173,7 @@ class MainScene extends Scene3D {
 			} else if (difficulty == 3) {
 				difficultyString = "<span style='color: black'>choosing...</span>";
 			}
-			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Play Time: " + Math.round(time) + "s <br>" + "Lives: <span style='color: red'>" + "♥".repeat(this.lives) + "</span><br>Difficulty: " + difficultyString + "<br>🏅 x" + this.collected_stars;
+			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Play Time: " + Math.round(time) + "s <br>" + "Lives: <span style='color: red'>" + "♥".repeat(this.lives) + "</span><br>Difficulty: " + difficultyString + "<br>🏅 x" + this.collected_coins;
 
 			// this.csm.update(this.camera.matrix);
 		}
