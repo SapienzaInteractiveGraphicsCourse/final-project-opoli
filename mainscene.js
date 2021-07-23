@@ -431,25 +431,7 @@ class MainScene extends Scene3D {
 
 		const addCity = async () => {
 			var tex_map, tex_normal_map;
-			this.imageLoader.load('./textures/grass.jpeg', (texture) => {
-				tex_map = texture
-				tex_map.wrapS = THREE.RepeatWrapping;
-				tex_map.wrapT = THREE.RepeatWrapping;
-
-				tex_map.repeat.set(0.5, 0.5);
-
-				tex_map.anisotropy = 4;
-			});
-			this.imageLoader.load('./textures/grasslight-big-nm.jpg', (texture) => {
-				tex_normal_map = texture
-				tex_normal_map.wrapS = THREE.RepeatWrapping;
-				tex_normal_map.wrapT = THREE.RepeatWrapping;
-
-				tex_normal_map.repeat.set(0.5, 0.5);
-
-				tex_normal_map.anisotropy = 4;
-			});
-
+			
 
 			const object = await this.load.gltf('city')
 			const scene = object.scenes[0]
@@ -469,11 +451,33 @@ class MainScene extends Scene3D {
 			city.traverse(child => {
 				if (child.isMesh) {
 					if (child.name.includes("Green")) {
+						this.imageLoader.load('./textures/grass.jpeg', (texture) => {
+							tex_map = texture
+							tex_map.wrapS = THREE.RepeatWrapping;
+							tex_map.wrapT = THREE.RepeatWrapping;
+			
+							tex_map.repeat.set(0.5, 0.5);
+			
+							tex_map.anisotropy = 4;
+
+							child.material.map = tex_map;
+							child.material.map.needsUpdate = true
+							
+						});
+						this.imageLoader.load('./textures/grasslight-big-nm.jpg', (texture) => {
+							tex_normal_map = texture
+							tex_normal_map.wrapS = THREE.RepeatWrapping;
+							tex_normal_map.wrapT = THREE.RepeatWrapping;
+			
+							tex_normal_map.repeat.set(0.5, 0.5);
+			
+							tex_normal_map.anisotropy = 4;
+
+							child.material.normalMap = tex_normal_map;
+							child.material.normalMap.needsUpdate = true
+						});
+			
 						child.material.color.setHex(0xffffff);
-						child.material.map = tex_map;
-						child.material.normalMap = tex_normal_map;
-						child.material.map.needsUpdate = true
-						child.material.normalMap.needsUpdate = true
 
 					} else if (child.name.includes("Pink") || child.name.includes("Magenta")) {
 						// console.log(child.name)
