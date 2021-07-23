@@ -797,7 +797,7 @@ class MainScene extends Scene3D {
 				timeout: '3000',
 				progressBar: true,
 				closeWith: ['click'],
-				killer: true,
+				killer: false,
 			}).show();
 		} else {
 			new Noty({
@@ -808,7 +808,7 @@ class MainScene extends Scene3D {
 				timeout: '3000',
 				progressBar: true,
 				closeWith: ['click'],
-				killer: true,
+				killer: false,
 			}).show();
 			playDeathMusic();
 		}
@@ -831,7 +831,7 @@ class MainScene extends Scene3D {
 			timeout: '3000',
 			progressBar: true,
 			closeWith: ['click'],
-			killer: true,
+			killer: false,
 		}).show();
 
 		if (isRaining) {
@@ -908,7 +908,7 @@ class MainScene extends Scene3D {
 					timeout: '3000',
 					progressBar: true,
 					closeWith: ['click'],
-					killer: true,
+					killer: false,
 				}).show();
 			}
 			this.gameStarted = true;
