@@ -547,13 +547,12 @@ class MainScene extends Scene3D {
 			})
 			this.tooFast = false;
 			this.drone.body.on.collision((otherObj, event) => {
-				// console.log(otherObj.name, new Vector3(this.drone.body.velocity.x, this.drone.body.velocity.y, this.drone.body.velocity.z).length(), this.drone.body.velocity);
 				if (otherObj.name.includes("CONSUMABLE")) {
 					this.physics.destroy(otherObj.body)
 					otherObj.parent.remove(otherObj)
 					console.log('CONSUMABILE HITTATO ' + otherObj.name)
 					playConsumableMusic();
-					if(otherObj.name.includes("heart")) {
+					if (otherObj.name.includes("heart")) {
 						this.lives++;
 						this.hearts--;
 					} else if (otherObj.name.includes("coin")) {
@@ -561,9 +560,9 @@ class MainScene extends Scene3D {
 						this.coins--;
 					} else if (otherObj.name.includes("tank")) {
 						this.tanks--;
-						this.fuel += 500;
+						this.fuel += 1000;
 					}
-					
+
 				} else if (this.tooFast) {
 					this.collisionDrone();
 					console.log('COLLISIONE FORTE')
@@ -622,7 +621,7 @@ class MainScene extends Scene3D {
 			});
 			document.addEventListener('keydown', function (event) {
 				let key = event.key.toLowerCase();
-				if (context.freefall) return;
+				if (context.freefall || !context.gameStart) return;
 				if (key === "h") console.log(context.drone.position)
 				if (key === "g") {
 					context.drone.body.setCollisionFlags(2);
@@ -659,7 +658,7 @@ class MainScene extends Scene3D {
 
 			document.addEventListener('keyup', function (event) {
 				let key = event.key.toLowerCase();
-				if (context.freefall) return;
+				if (context.freefall || !context.gameStart) return;
 				if ("wsadqe< ".indexOf(key) == -1) return;
 				inputs[key] = false;
 				inputs_queue[key] = false;
@@ -760,7 +759,7 @@ class MainScene extends Scene3D {
 					if (ch.isMesh) {
 						ch.material.metalness = 0.5
 						ch.material.roughness = 1
-						ch.material.emissive.setHex(0.2,0.2,0.2)
+						ch.material.emissive.setHex(0.2, 0.2, 0.2)
 					}
 				})
 				bitcoin.scale.set(0.07, 0.07, 0.07)
@@ -810,7 +809,7 @@ class MainScene extends Scene3D {
 						ch.material.roughness = 1
 						ch.material.map = null
 						ch.material.color.setHex(0xff0000)
-						ch.material.emissive.setHex(0.5,0.5,0.5)
+						ch.material.emissive.setHex(0.5, 0.5, 0.5)
 					}
 				})
 				tank.scale.set(0.1, 0.1, 0.1)
@@ -860,7 +859,7 @@ class MainScene extends Scene3D {
 						ch.material.roughness = 1
 						ch.material.map = null
 						ch.material.color.setHex(0xff0000)
-						ch.material.emissive.setHex(0.5,0.5,0.5)
+						ch.material.emissive.setHex(0.5, 0.5, 0.5)
 					}
 				})
 				heart.scale.set(0.07, 0.07, 0.07)
@@ -1058,11 +1057,12 @@ class MainScene extends Scene3D {
 			}
 
 			// fuel simulator
-			if(this.gameStart) {
+			if (this.gameStart) {
 				this.gauge.set(this.fuel);
-				this.fuel -= 5*delta;
+				this.fuel -= (5 + difficulty * difficulty * 3) * delta;
+				if (this.fuel <= 0) this.collisionDrone()
 			}
-			
+
 
 			this.thirdPersonCamera.Update(delta, this.theta, this.phi);
 
@@ -1080,8 +1080,7 @@ class MainScene extends Scene3D {
 			// this.speed.z*=3
 			const p_speed = this.speed.y * 10;
 			if (!this.freefall) {
-				this.drone.body.applyForceY(p_speed * delta / 10 + d_speed_y)
-				this.drone.body.applyForceY(-this.drone.body.velocity.y * 0.001)
+				this.drone.body.applyForceY(p_speed * delta / 10 + d_speed_y*2 - this.drone.body.velocity.y * 0.001)
 				this.drone.body.setAngularVelocityY(d_ang.y / delta);
 				this.drone.body.setAngularVelocityX((cos_rot_y * d_ang.x + sin_rot_y * d_ang.z) / delta);
 				this.drone.body.setAngularVelocityZ((cos_rot_y * d_ang.z - sin_rot_y * d_ang.x) / delta);
