@@ -127,14 +127,14 @@ const sounds = {
 
 const droneColors = ["red", "black", "blue", "green", "white"];
 var chosenColors = [3, 4]; //1st drone, 2nd propellers
-var difficulty = 0; //easy 0, medium 1, hard 2
+var difficulty = 3; //easy 0, medium 1, hard 2
 
 function colorToHex(color) {
 	if (color == "red") {
 		return 0xff0000;
 	} else if (color == "black") {
 		return 0x000000;
- 	} else if (color == "blue") {
+	} else if (color == "blue") {
 		return 0x0000ff;
 	} else if (color == "green") {
 		return 0x00ff00;
@@ -160,13 +160,7 @@ function loadSounds() {
 	}
 }
 
-function showCommands() {
-	if (document.getElementById("commands").style.display == 'block') {
-		document.getElementById("commands").style.display = 'none';
-	} else {
-		document.getElementById("commands").style.display = 'block';
-	}
-}
+
 
 function playSoundTrack() {
 	if (!soundsLoaded) return;
@@ -190,7 +184,7 @@ function playSoundTrack() {
 }
 
 function playDeathMusic() {
-	if(sound.isPlaying) {
+	if (sound.isPlaying) {
 		playSoundTrack();
 	}
 	helperSound.isPlaying = false;
@@ -201,7 +195,7 @@ function playDeathMusic() {
 }
 
 function playConsumableMusic() {
-	if(sound.isPlaying) {
+	if (sound.isPlaying) {
 		helperSound.isPlaying = false;
 		helperSound.setBuffer(sounds.consumable.sound);
 		helperSound.setLoop(false);
@@ -211,7 +205,7 @@ function playConsumableMusic() {
 }
 
 function playHitMusic() {
-	if(sound.isPlaying) {
+	if (sound.isPlaying) {
 		helperSound.isPlaying = false;
 		helperSound.setBuffer(sounds.hit.sound);
 		helperSound.setLoop(false);
@@ -221,13 +215,15 @@ function playHitMusic() {
 }
 
 
-
+var context;
+var controls
 class MainScene extends Scene3D {
 	constructor() {
 		super('MainScene')
 	}
 
 	init() {
+		context = this;
 		this.renderer.setPixelRatio(Math.max(1, window.devicePixelRatio / 2))
 		this.imageLoader = new TextureLoader();
 
@@ -243,7 +239,7 @@ class MainScene extends Scene3D {
 			this.phi = Math.PI / 6;
 
 
-			this.controls = new PointerLockControls(this.camera, this.canvas);
+			controls = new PointerLockControls(this.camera, document.body);
 
 			this.thirdPersonCamera = new ThirdPersonCamera({
 				camera: this.camera,
@@ -266,14 +262,9 @@ class MainScene extends Scene3D {
 			// this.csm.setupMaterial(material); // must be called to pass all CSM-related uniforms to the shader
 
 
-
-
-			document.addEventListener('click', () => {
-				this.controls.lock();
-			})
 			var max_mousemove = Math.pow(1580, 1 / this.camera.aspect);;
 			document.addEventListener('mousemove', (event) => {
-				if (this.controls.isLocked) {
+				if (controls.isLocked) {
 					var dx = Math.max(-max_mousemove, Math.min(event.movementX, max_mousemove)) * 0.001;
 					var dy = Math.max(-max_mousemove, Math.min(event.movementY, max_mousemove)) * 0.001;
 					// console.log(event.movementX, event.movementY, camera.aspect)
@@ -288,7 +279,15 @@ class MainScene extends Scene3D {
 
 				}
 			})
-
+			controls.addEventListener('unlock', () => {
+				document.getElementById("commands").style.display = 'block';
+				console.log('unlocked')
+			})
+			controls.addEventListener('lock', () => {
+				console.log('lock')
+			})
+			document.getElementById("musicbutton").addEventListener("click", playSoundTrack);
+			
 		}
 
 		//sounds
@@ -391,7 +390,7 @@ class MainScene extends Scene3D {
 	droneElements = {};
 
 
-
+	started = false;
 	async create() {
 		const { lights } = await this.warpSpeed('-ground', '-orbitControls')
 
@@ -525,7 +524,6 @@ class MainScene extends Scene3D {
 			this.drone.add(drone)
 			this.drone.add(new AxesHelper(2));
 			this.drone.position.set(35, 1, 0)
-			this.drone.children[0].material.color.setHex(colorToHex(droneColors[chosenColors[0]]))
 			// add shadow
 			this.drone.traverse(child => {
 				if (child.isMesh) {
@@ -534,19 +532,15 @@ class MainScene extends Scene3D {
 					child.material.metalness = 0
 					if (child.name === "PropellerFR") {
 						this.droneElements.propellerFR = child;
-						child.material.color.setHex(colorToHex(droneColors[chosenColors[1]]))
 					}
 					if (child.name === "PropellerFL") {
 						this.droneElements.propellerFL = child;
-						child.material.color.setHex(colorToHex(droneColors[chosenColors[1]]))
 					}
 					if (child.name === "PropellerBR") {
 						this.droneElements.propellerBR = child;
-						child.material.color.setHex(colorToHex(droneColors[chosenColors[1]]))
 					}
 					if (child.name === "PropellerBL") {
 						this.droneElements.propellerBL = child;
-						child.material.color.setHex(colorToHex(droneColors[chosenColors[1]]))
 					}
 					if (child.name === "propellers_axes") {
 						this.droneElements.propellers_axes = child
@@ -601,11 +595,34 @@ class MainScene extends Scene3D {
 			this.drone.body.setCcdSweptSphereRadius(0.25)
 			this.thirdPersonCamera.SetTarget(this.drone);
 
-			var context = this;
+
 			// event listeners
+			document.getElementById("startbutton").addEventListener("click", () => {
+				document.getElementById("gameloader").style.display = 'none';
+				chosenColors[0] = droneColors.indexOf(document.getElementById("startbutton").getAttribute("data-drone-color"))
+				chosenColors[1] = droneColors.indexOf(document.getElementById("startbutton").getAttribute("data-propeller-color"))
+				let n_difficulty = document.getElementById("startbutton").getAttribute("data-difficulty")
+				if (n_difficulty == "easy") {
+					difficulty = 0;
+				} else if (n_difficulty == "medium") {
+					difficulty = 1;
+				} else {
+					difficulty = 2;
+				}
+				context.drone.children[0].material.color.setHex(colorToHex(droneColors[chosenColors[0]]))
+				context.droneElements.propellerFR.material.color.setHex(colorToHex(droneColors[chosenColors[1]]))
+				context.started = true;
+				controls.lock();
+				document.getElementById("joystickbutton").addEventListener("click", () => {
+					document.getElementById("commands").style.display = 'none';
+					setTimeout(() => {
+						controls.lock()
+					}, 1000);
+				}, false);
+			});
 			document.addEventListener('keydown', function (event) {
-				if (context.freefall) return;
 				let key = event.key.toLowerCase();
+				if (context.freefall) return;
 				if (key === "h") console.log(context.drone.position)
 				if (key === "g") {
 					context.drone.body.setCollisionFlags(2);
@@ -639,12 +656,9 @@ class MainScene extends Scene3D {
 				}
 			});
 
-			document.getElementById("musicbutton").addEventListener("click", playSoundTrack);
-			document.getElementById("joystickbutton").addEventListener("click", showCommands);
-
 			document.addEventListener('keyup', function (event) {
-				if (context.freefall) return;
 				let key = event.key.toLowerCase();
+				if (context.freefall) return;
 				if ("wsadqe< ".indexOf(key) == -1) return;
 				inputs[key] = false;
 				inputs_queue[key] = false;
@@ -840,7 +854,6 @@ class MainScene extends Scene3D {
 			document.getElementById("rainbutton").src = './menu/sun.png';
 		}
 
-		let context = this;
 		setTimeout(function () { context.shiftRain(!isRaining) }, Math.random() * (20000 - 5000) + 5000)
 	}
 
@@ -910,8 +923,9 @@ class MainScene extends Scene3D {
 					closeWith: ['click'],
 					killer: false,
 				}).show();
+				this.gameStarted = true;
+				document.getElementById('startbutton').disabled = false;
 			}
-			this.gameStarted = true;
 
 			// fuel simulator
 			this.gauge.set(this.fuel);
@@ -984,12 +998,14 @@ class MainScene extends Scene3D {
 			TWEEN.update();
 
 			let difficultyString = "<span style='color: green'>Easy</span>";
-			if(difficulty == 1) {
+			if (difficulty == 1) {
 				difficultyString = "<span style='color: orange'>Medium</span>";
 			} else if (difficulty == 2) {
 				difficultyString = "<span style='color: red'>Hard</span>";
+			} else if (difficulty == 3) {
+				difficultyString = "<span style='color: black'>choosing...</span>";
 			}
-			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Play Time: " + Math.round(time) + "s <br>" + "Lives: <span style='color: red'>" + "♥".repeat(this.lives) + "</span><br>Difficulty: "+difficultyString+"<br>⭐ x"+this.collected_stars;
+			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Play Time: " + Math.round(time) + "s <br>" + "Lives: <span style='color: red'>" + "♥".repeat(this.lives) + "</span><br>Difficulty: " + difficultyString + "<br>⭐ x" + this.collected_stars;
 
 			// this.csm.update(this.camera.matrix);
 		}
@@ -997,20 +1013,10 @@ class MainScene extends Scene3D {
 }
 var project;
 
-document.getElementById("startbutton").addEventListener("click", () => {
-	document.getElementById("gameloader").style.display = 'none';
-	//playSoundTrack();
-	chosenColors[0] = droneColors.indexOf(document.getElementById("startbutton").getAttribute("data-drone-color"))
-	chosenColors[1] = droneColors.indexOf(document.getElementById("startbutton").getAttribute("data-propeller-color"))
-	let n_difficulty = document.getElementById("startbutton").getAttribute("data-difficulty")
-	if(n_difficulty == "easy") {
-		difficulty = 0;
-	} else if(n_difficulty == "medium") {
-		difficulty = 1;
-	} else {
-		difficulty = 2;
-	}
 
+
+window.addEventListener('load', () => {
+	
 	PhysicsLoader('./libs/ammo_new', () => {
 		project = new Project({ antialias: true, maxSubSteps: 1, fixedTimeStep: 1 / 960, scenes: [MainScene], gravity: { x: 0, y: -9.81, z: 0 } })
 
@@ -1034,8 +1040,4 @@ document.getElementById("startbutton").addEventListener("click", () => {
 		window.onresize = resize;
 		resize();
 	})
-});
-
-window.addEventListener('load', () => {
-	
 })
