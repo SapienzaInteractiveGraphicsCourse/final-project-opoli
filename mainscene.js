@@ -129,6 +129,7 @@ const sounds = {
 const droneColors = ["red", "black", "blue", "green", "white"];
 var chosenColors = [3, 4]; //1st drone, 2nd propellers
 var difficulty = 3; //easy 0, medium 1, hard 2
+const targetCoins = [3, 5, 10, 0];
 
 function colorToHex(color) {
 	if (color == "red") {
@@ -573,7 +574,7 @@ class MainScene extends Scene3D {
 						this.collected_coins++;
 						this.coins--;
 
-						if (this.collected_coins >= 1) {
+						if (this.collected_coins >= targetCoins[difficulty]) {
 							let difficulty_msg = "It was too easy, right? Retry with MEDIUM!";
 							if(difficulty == 1) {
 								difficulty_msg = "Good job, but you can do better. Try HARD!";
@@ -1173,7 +1174,7 @@ class MainScene extends Scene3D {
 			} else if (difficulty == 3) {
 				difficultyString = "<span style='color: black'>choosing...</span>";
 			}
-			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Play Time: " + Math.round(time) + "s <br>" + "Lives: <span style='color: red'>" + "♥".repeat(this.lives) + "</span><br>Difficulty: " + difficultyString + "<br>🏅 x" + this.collected_coins;
+			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Play Time: " + Math.round(time) + "s <br>" + "Lives: <span style='color: red'>" + "♥".repeat(this.lives) + "</span><br>Difficulty: " + difficultyString + "<br>🏅 " + this.collected_coins + " / "+targetCoins[difficulty];
 
 			// this.csm.update(this.camera.matrix);
 		}
