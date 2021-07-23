@@ -148,14 +148,10 @@ function loadSounds() {
 	soundsLoaderMngr.onLoad = () => {
 		soundsLoaded = true;
 	};
-	/*soundsLoaderMngr.onProgress = (url, itemsLoaded, itemsTotal) => {
-		console.log("Loading sounds... ", itemsLoaded / itemsTotal * 100, '%');
-	};*/
 	const audioLoader = new THREE.AudioLoader(soundsLoaderMngr);
 	for (const sound of Object.values(sounds)) {
 		audioLoader.load(sound.url, function (buffer) {
 			sound.sound = buffer;
-			//console.log("Loaded ", buffer);
 		});
 	}
 }
@@ -186,12 +182,12 @@ function playSoundTrack() {
 function playDeathMusic() {
 	if (sound.isPlaying) {
 		playSoundTrack();
+		helperSound.isPlaying = false;
+		helperSound.setBuffer(sounds.death.sound);
+		helperSound.setLoop(false);
+		helperSound.setVolume(0.3);
+		helperSound.play();
 	}
-	helperSound.isPlaying = false;
-	helperSound.setBuffer(sounds.death.sound);
-	helperSound.setLoop(false);
-	helperSound.setVolume(0.3);
-	helperSound.play();
 }
 
 function playConsumableMusic() {
@@ -267,7 +263,6 @@ class MainScene extends Scene3D {
 				if (controls.isLocked) {
 					var dx = Math.max(-max_mousemove, Math.min(event.movementX, max_mousemove)) * 0.001;
 					var dy = Math.max(-max_mousemove, Math.min(event.movementY, max_mousemove)) * 0.001;
-					// console.log(event.movementX, event.movementY, camera.aspect)
 
 					this.theta += dx * Math.PI / 2;
 					this.phi += dy * Math.PI / 2;
@@ -281,13 +276,9 @@ class MainScene extends Scene3D {
 			})
 			controls.addEventListener('unlock', () => {
 				document.getElementById("commands").style.display = 'block';
-				console.log('unlocked')
-			})
-			controls.addEventListener('lock', () => {
-				console.log('lock')
 			})
 			document.getElementById("musicbutton").addEventListener("click", playSoundTrack);
-			
+
 		}
 
 		//sounds
@@ -323,11 +314,6 @@ class MainScene extends Scene3D {
 			this.add.existing(rain);
 			this.rain = rain;
 		}
-
-		// this.physics.collisionEvents.on('collision', data => {
-		// 	const { bodies, event } = data
-		// 	console.log(bodies[0].name, bodies[1].name, event)
-		// })
 	}
 
 	async preload() {
@@ -335,7 +321,11 @@ class MainScene extends Scene3D {
 
 		const drone = this.load.preload('drone', './models/drone.glb')
 
-		await Promise.all([city, drone])
+		const bitcoin = this.load.preload('bitcoin', './models/bitcoin/scene.gltf')
+
+		const tank = this.load.preload('tank', './models/tank/scene.gltf')
+
+		await Promise.all([city, drone, bitcoin, tank])
 	}
 
 	speed = new Vector3(0, 0, 0);
@@ -412,7 +402,7 @@ class MainScene extends Scene3D {
 		this.ground = new ExtendedObject3D()
 		this.ground.add(new Mesh(new PlaneGeometry(1000, 1000), new MeshPhongMaterial({ color: 0xff0000 })));
 		this.ground.rotation.x = -Math.PI / 2
-		this.ground.position.setY(-3.5)
+		this.ground.position.setY(-0.9)
 		this.ground.visible = false;
 
 		this.add.existing(this.ground)
@@ -420,6 +410,7 @@ class MainScene extends Scene3D {
 			collisionFlags: 1,
 			mass: 0
 		})
+
 
 
 		const addCity = async () => {
@@ -469,7 +460,7 @@ class MainScene extends Scene3D {
 						child.material.normalMap.needsUpdate = true
 
 					} else if (child.name.includes("Pink") || child.name.includes("Magenta")) {
-						console.log(child.name)
+						// console.log(child.name)
 					} else if (child.name.includes("Cyan")) {
 						var water = new Water(child.geometry, {
 							textureWidth: 2048,
@@ -522,7 +513,6 @@ class MainScene extends Scene3D {
 			this.drone = new ExtendedObject3D()
 			this.drone.name = 'drone'
 			this.drone.add(drone)
-			this.drone.add(new AxesHelper(2));
 			this.drone.position.set(35, 1, 0)
 			// add shadow
 			this.drone.traverse(child => {
@@ -553,19 +543,15 @@ class MainScene extends Scene3D {
 				mass: 1
 			})
 
-			this.drone.body.checkCollisions = true;
-
 			this.drone.body.on.collision((otherObj, event) => {
-				// console.log(otherObj.material.color, otherObj);
 				if (otherObj.name.includes("CONSUMABLE")) {
 					this.physics.destroy(otherObj.body)
 					otherObj.parent.remove(otherObj)
 					console.log('CONSUMABILE HITTATO ' + otherObj.name)
 					playConsumableMusic();
 					this.collected_stars += 1;
-				} else if (otherObj.name === "PropellerFR" || otherObj.name === "PropellerFL" || otherObj.name === "PropellerBR" || otherObj.name === "PropellerBL") {
-
-				} else if (new Vector3(this.drone.body.velocity.x, this.drone.body.velocity.y, this.drone.body.velocity.z).length() > 8) {
+					this.coins--;
+				} else if (new Vector3(this.drone.body.velocity.x, this.drone.body.velocity.y, this.drone.body.velocity.z).length() > 9) {
 					this.collisionDrone();
 					console.log('COLLISIONE FORTE')
 
@@ -635,7 +621,8 @@ class MainScene extends Scene3D {
 				}
 				if (key === "t") {
 					context.drone.body.setCollisionFlags(2);
-					context.drone.position.set(78.16771697998047, 33.26953125, 87.68900299072266);
+					// context.drone.position.set(78.16771697998047, 33.26953125, 87.68900299072266);
+					context.drone.position.set(250, 100, 250);
 					context.drone.body.needUpdate = true;
 					context.drone.body.once.update(() => {
 						context.drone.body.setCollisionFlags(0);
@@ -701,7 +688,6 @@ class MainScene extends Scene3D {
 
 
 		}
-
 		const addWater = async () => {
 
 			var geo = new THREE.PlaneBufferGeometry(1000, 1000, 10, 10);
@@ -740,29 +726,110 @@ class MainScene extends Scene3D {
 			this.add.existing(water);
 
 		}
+		const addBitCoin = async () => {
+			const object = await this.load.gltf('bitcoin')
+			const scene = object.scenes[0]
+			var i = 0;
+			this.coins = 0
+			setInterval(() => {
+				if (this.coins >= 50) return;
+				i++
+				this.coins++
+
+				const x = Math.random() * (369 + 418) - 418,
+					y = 100,
+					z = Math.random() * (250 + 253) - 253
+				const bitcoin = new ExtendedObject3D()
+				bitcoin.name = 'CONSUMABLE ' + i
+				bitcoin.add(scene.clone())
+				bitcoin.traverse(ch => {
+					if (ch.isMesh) {
+						ch.material.metalness = 0.5
+						ch.material.roughness = 1
+						ch.material.emissive.setHex(0.2,0.2,0.2)
+					}
+				})
+				bitcoin.scale.set(0.07, 0.07, 0.07)
+				bitcoin.position.set(x, y, z)
+				bitcoin.visible = false;
+				this.add.existing(bitcoin)
+				this.physics.add.existing(bitcoin, {
+					addChildren: false,
+					shape: 'convexMesh'
+				})
+				bitcoin.body.setAngularFactor(0, 0, 0)
+				bitcoin.body.on.collision((otherObj) => {
+					if (otherObj.name != "drone" && !otherObj.name.includes("CONSUMABLE")) {
+						bitcoin.body.setCollisionFlags(2)
+						bitcoin.position.setY(Math.min(bitcoin.position.y + Math.random() * 25, 90))
+						bitcoin.body.needUpdate = true;
+						bitcoin.body.once.update(() => {
+							bitcoin.visible = true;
+							bitcoin.body.setCollisionFlags(0)
+							bitcoin.body.setLinearFactor(0, 0, 0);
+							bitcoin.body.setVelocity(0, 0, 0);
+							bitcoin.body.setAngularVelocityY(2.5)
+						})
+					}
+				})
+			}, 2000)
+		}
+		const addTank = async () => {
+			const object = await this.load.gltf('tank')
+			const scene = object.scenes[0]
+			var i = 0;
+			this.tanks = 0
+			setInterval(() => {
+				if (this.tanks >= 10) return;
+				i++
+				this.tanks++
+
+				const x = Math.random() * (369 + 418) - 418,
+					y = 100,
+					z = Math.random() * (250 + 253) - 253
+				const tank = new ExtendedObject3D()
+				tank.name = 'CONSUMABLE ' + i
+				tank.add(scene.clone())
+				tank.traverse(ch => {
+					if (ch.isMesh) {
+						ch.material.metalness = 0
+						ch.material.roughness = 1
+						ch.material.map = null
+						ch.material.color.setHex(0xff0000)
+						ch.material.emissive.setHex(0.5,0.5,0.5)
+					}
+				})
+				tank.scale.set(0.07, 0.07, 0.07)
+				tank.position.set(x, y, z)
+				tank.visible = false;
+				this.add.existing(tank)
+				this.physics.add.existing(tank, {
+					addChildren: false,
+					shape: 'convexMesh'
+				})
+				tank.body.setAngularFactor(0, 0, 0)
+				tank.body.on.collision((otherObj) => {
+					if (otherObj.name != "drone" && !otherObj.name.includes("CONSUMABLE")) {
+						tank.body.setCollisionFlags(2)
+						tank.position.setY(Math.min(tank.position.y + Math.random() * 25, 90))
+						tank.body.needUpdate = true;
+						tank.body.once.update(() => {
+							tank.visible = true;
+							tank.body.setCollisionFlags(0)
+							tank.body.setLinearFactor(0, 0, 0);
+							tank.body.setVelocity(0, 0, 0);
+							tank.body.setAngularVelocityY(2.5)
+						})
+					}
+				})
+			}, 10000)
+		}
 
 		addWater().then(() => {
 			addCity().then(() => {
 				addDrone().then(() => {
-					// boxes 
-					setTimeout(() => {
-						for (let i = 0; i < 20; i++) {
-							const x = (Math.random() - 0.5) * 5,
-								y = 150,
-								z = (Math.random() - 0.5) * 5
-
-							const geometry = new THREE.BoxGeometry(1, 1, 1)
-							const material = new THREE.MeshLambertMaterial({ color: 0x00ff00 })
-							const box_three = new THREE.Mesh(geometry, material)
-							const box_object = new ExtendedObject3D();
-							box_object.add(box_three)
-							box_object.name = "CONSUMABLE " + i
-							box_object.position.set(x, y, z)
-							this.add.existing(box_object)
-							this.physics.add.existing(box_object)
-
-						}
-					}, 1000)
+					addBitCoin();
+					addTank();
 				});
 			})
 		})
@@ -776,7 +843,6 @@ class MainScene extends Scene3D {
 	isRaining = false;
 	collisionDrone() {
 		function changeColor(context, times, color) {
-			//console.log("TIMES TO BLINK: "+times)
 			if (times == 0) return;
 
 			context.droneElements.propellerBL.material.transparent = true;
@@ -864,8 +930,6 @@ class MainScene extends Scene3D {
 		const delta = time - this.oldTime
 		this.oldTime = time;
 		if (delta >= project.projectConfig.maxSubSteps * project.projectConfig.fixedTimeStep) {
-			// console.log(project.projectConfig.maxSubSteps);
-			// console.log('1/', 1 / project.projectConfig.fixedTimeStep);
 			project.projectConfig.maxSubSteps *= 2
 			project.projectConfig.fixedTimeStep *= 2
 		} else if (delta < project.projectConfig.maxSubSteps * project.projectConfig.fixedTimeStep / 8) {
@@ -1005,7 +1069,7 @@ class MainScene extends Scene3D {
 			} else if (difficulty == 3) {
 				difficultyString = "<span style='color: black'>choosing...</span>";
 			}
-			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Play Time: " + Math.round(time) + "s <br>" + "Lives: <span style='color: red'>" + "♥".repeat(this.lives) + "</span><br>Difficulty: " + difficultyString + "<br>⭐ x" + this.collected_stars;
+			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Play Time: " + Math.round(time) + "s <br>" + "Lives: <span style='color: red'>" + "♥".repeat(this.lives) + "</span><br>Difficulty: " + difficultyString + "<br>🏅 x" + this.collected_stars;
 
 			// this.csm.update(this.camera.matrix);
 		}
@@ -1016,7 +1080,7 @@ var project;
 
 
 window.addEventListener('load', () => {
-	
+
 	PhysicsLoader('./libs/ammo_new', () => {
 		project = new Project({ antialias: true, maxSubSteps: 1, fixedTimeStep: 1 / 960, scenes: [MainScene], gravity: { x: 0, y: -9.81, z: 0 } })
 

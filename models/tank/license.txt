@@ -1,0 +1,11 @@
+Model Information:
+* title:	Fuel Tank MidPoly | Painted
+* source:	https://sketchfab.com/3d-models/fuel-tank-midpoly-painted-c82eec8c84c04f10a707d2b3f7e0b727
+* author:	ikorca (https://sketchfab.com/ikorca)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Fuel Tank MidPoly | Painted" (https://sketchfab.com/3d-models/fuel-tank-midpoly-painted-c82eec8c84c04f10a707d2b3f7e0b727) by ikorca (https://sketchfab.com/ikorca) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
