@@ -542,8 +542,9 @@ class MainScene extends Scene3D {
 				shape: 'hull',
 				mass: 1
 			})
-
+			this.tooFast = false;
 			this.drone.body.on.collision((otherObj, event) => {
+				// console.log(otherObj.name, new Vector3(this.drone.body.velocity.x, this.drone.body.velocity.y, this.drone.body.velocity.z).length(), this.drone.body.velocity);
 				if (otherObj.name.includes("CONSUMABLE")) {
 					this.physics.destroy(otherObj.body)
 					otherObj.parent.remove(otherObj)
@@ -551,7 +552,7 @@ class MainScene extends Scene3D {
 					playConsumableMusic();
 					this.collected_stars += 1;
 					this.coins--;
-				} else if (new Vector3(this.drone.body.velocity.x, this.drone.body.velocity.y, this.drone.body.velocity.z).length() > 9) {
+				} else if (this.tooFast) {
 					this.collisionDrone();
 					console.log('COLLISIONE FORTE')
 
@@ -1039,7 +1040,7 @@ class MainScene extends Scene3D {
 			this.droneElements.propellerBR.rotation.y -= (p_speed + d_speed_y + this.p_speed_p.z + this.p_speed_r.z + this.p_speed_y.z) * delta;
 			this.droneElements.propellerBL.rotation.y -= (p_speed + d_speed_y + this.p_speed_p.w + this.p_speed_r.w + this.p_speed_y.w) * delta;
 
-
+			this.tooFast = new Vector3(this.drone.body.velocity.x, this.drone.body.velocity.y, this.drone.body.velocity.z).length() > 9
 			this.drone.body.needUpdate = true;
 			this.old_ang.set(this.ang.x * Math.min(this.speed.y / this.max_speed_y * 2, 1), this.ang.y, this.ang.z * Math.min(this.speed.y / this.max_speed_y * 2, 1));
 			this.old_speed_y = this.speed.y;
