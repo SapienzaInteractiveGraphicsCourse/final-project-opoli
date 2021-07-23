@@ -325,7 +325,9 @@ class MainScene extends Scene3D {
 
 		const tank = this.load.preload('tank', './models/tank/scene.gltf')
 
-		await Promise.all([city, drone, bitcoin, tank])
+		const heart = this.load.preload('heart', './models/heart/scene.gltf')
+
+		await Promise.all([city, drone, bitcoin, tank, heart])
 	}
 
 	speed = new Vector3(0, 0, 0);
@@ -334,6 +336,7 @@ class MainScene extends Scene3D {
 	ang_speed = new Vector3(0, 0, 0);
 	freefall = false;
 	gameStarted = false;
+	gameStart = false;
 	old_ang = new Vector3(0, 0, 0);
 	old_speed_y = 0;
 	oldTime = -0.007;
@@ -550,8 +553,17 @@ class MainScene extends Scene3D {
 					otherObj.parent.remove(otherObj)
 					console.log('CONSUMABILE HITTATO ' + otherObj.name)
 					playConsumableMusic();
-					this.collected_stars += 1;
-					this.coins--;
+					if(otherObj.name.includes("heart")) {
+						this.lives++;
+						this.hearts--;
+					} else if (otherObj.name.includes("coin")) {
+						this.collected_stars++;
+						this.coins--;
+					} else if (otherObj.name.includes("tank")) {
+						this.tanks--;
+						this.fuel += 500;
+					}
+					
 				} else if (this.tooFast) {
 					this.collisionDrone();
 					console.log('COLLISIONE FORTE')
@@ -585,6 +597,7 @@ class MainScene extends Scene3D {
 
 			// event listeners
 			document.getElementById("startbutton").addEventListener("click", () => {
+				this.gameStart = true;
 				document.getElementById("gameloader").style.display = 'none';
 				chosenColors[0] = droneColors.indexOf(document.getElementById("startbutton").getAttribute("data-drone-color"))
 				chosenColors[1] = droneColors.indexOf(document.getElementById("startbutton").getAttribute("data-propeller-color"))
@@ -741,7 +754,7 @@ class MainScene extends Scene3D {
 					y = 100,
 					z = Math.random() * (250 + 253) - 253
 				const bitcoin = new ExtendedObject3D()
-				bitcoin.name = 'CONSUMABLE ' + i
+				bitcoin.name = 'CONSUMABLE coin ' + i
 				bitcoin.add(scene.clone())
 				bitcoin.traverse(ch => {
 					if (ch.isMesh) {
@@ -789,7 +802,7 @@ class MainScene extends Scene3D {
 					y = 100,
 					z = Math.random() * (250 + 253) - 253
 				const tank = new ExtendedObject3D()
-				tank.name = 'CONSUMABLE ' + i
+				tank.name = 'CONSUMABLE tank ' + i
 				tank.add(scene.clone())
 				tank.traverse(ch => {
 					if (ch.isMesh) {
@@ -800,7 +813,7 @@ class MainScene extends Scene3D {
 						ch.material.emissive.setHex(0.5,0.5,0.5)
 					}
 				})
-				tank.scale.set(0.07, 0.07, 0.07)
+				tank.scale.set(0.1, 0.1, 0.1)
 				tank.position.set(x, y, z)
 				tank.visible = false;
 				this.add.existing(tank)
@@ -825,12 +838,63 @@ class MainScene extends Scene3D {
 				})
 			}, 10000)
 		}
+		const addHearts = async () => {
+			const object = await this.load.gltf('heart')
+			const scene = object.scenes[0]
+			var i = 0;
+			this.hearts = 0
+			setInterval(() => {
+				if (this.hearts >= 10) return;
+				i++
+				this.hearts++
+
+				const x = Math.random() * (369 + 418) - 418,
+					y = 100,
+					z = Math.random() * (250 + 253) - 253
+				const heart = new ExtendedObject3D()
+				heart.name = 'CONSUMABLE heart ' + i
+				heart.add(scene.clone())
+				heart.traverse(ch => {
+					if (ch.isMesh) {
+						ch.material.metalness = 0
+						ch.material.roughness = 1
+						ch.material.map = null
+						ch.material.color.setHex(0xff0000)
+						ch.material.emissive.setHex(0.5,0.5,0.5)
+					}
+				})
+				heart.scale.set(0.07, 0.07, 0.07)
+				heart.position.set(x, y, z)
+				heart.visible = false;
+				this.add.existing(heart)
+				this.physics.add.existing(heart, {
+					addChildren: false,
+					shape: 'convexMesh'
+				})
+				heart.body.setAngularFactor(0, 0, 0)
+				heart.body.on.collision((otherObj) => {
+					if (otherObj.name != "drone" && !otherObj.name.includes("CONSUMABLE")) {
+						heart.body.setCollisionFlags(2)
+						heart.position.setY(Math.min(heart.position.y + Math.random() * 25, 90))
+						heart.body.needUpdate = true;
+						heart.body.once.update(() => {
+							heart.visible = true;
+							heart.body.setCollisionFlags(0)
+							heart.body.setLinearFactor(0, 0, 0);
+							heart.body.setVelocity(0, 0, 0);
+							heart.body.setAngularVelocityY(2.5)
+						})
+					}
+				})
+			}, 20000)
+		}
 
 		addWater().then(() => {
 			addCity().then(() => {
 				addDrone().then(() => {
 					addBitCoin();
 					addTank();
+					addHearts();
 				});
 			})
 		})
@@ -866,6 +930,7 @@ class MainScene extends Scene3D {
 
 		if (this.lives > 0) {
 			this.lives -= 1;
+			this.fuel = 3000;
 			var context = this;
 			setTimeout(function () { changeColor(context, 6, 0x000000) }, 500);
 			playHitMusic();
@@ -874,11 +939,11 @@ class MainScene extends Scene3D {
 				type: 'warning',
 				layout: 'topRight',
 				theme: 'nest',
-				text: 'You lost 1 life',
+				text: 'You lost 1 life!',
 				timeout: '3000',
 				progressBar: true,
 				closeWith: ['click'],
-				killer: false,
+				killer: true,
 			}).show();
 		} else {
 			new Noty({
@@ -889,7 +954,7 @@ class MainScene extends Scene3D {
 				timeout: '3000',
 				progressBar: true,
 				closeWith: ['click'],
-				killer: false,
+				killer: true,
 			}).show();
 			playDeathMusic();
 		}
@@ -912,7 +977,7 @@ class MainScene extends Scene3D {
 			timeout: '3000',
 			progressBar: true,
 			closeWith: ['click'],
-			killer: false,
+			killer: true,
 		}).show();
 
 		if (isRaining) {
@@ -986,15 +1051,18 @@ class MainScene extends Scene3D {
 					timeout: '3000',
 					progressBar: true,
 					closeWith: ['click'],
-					killer: false,
+					killer: true,
 				}).show();
 				this.gameStarted = true;
 				document.getElementById('startbutton').disabled = false;
 			}
 
 			// fuel simulator
-			this.gauge.set(this.fuel);
-			this.fuel -= 1;
+			if(this.gameStart) {
+				this.gauge.set(this.fuel);
+				this.fuel -= 5*delta;
+			}
+			
 
 			this.thirdPersonCamera.Update(delta, this.theta, this.phi);
 
