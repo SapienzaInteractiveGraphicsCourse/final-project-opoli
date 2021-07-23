@@ -442,11 +442,6 @@ class MainScene extends Scene3D {
 			city.scale.set(10, 10, 10)
 			city.position.set(430, -5, 400)
 			this.add.existing(city)
-			var normal = this.imageLoader.load('./textures/waternormals.jpg');
-
-			normal.wrapS = THREE.RepeatWrapping;
-			normal.wrapT = THREE.RepeatWrapping;
-			var c = this.directional.position.clone();
 
 			city.traverse(child => {
 				if (child.isMesh) {
