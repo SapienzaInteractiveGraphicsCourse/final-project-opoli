@@ -808,7 +808,7 @@ class MainScene extends Scene3D {
 						ch.material.metalness = 0
 						ch.material.roughness = 1
 						ch.material.map = null
-						ch.material.color.setHex(0xff0000)
+						ch.material.color.setHex(0x00ff00)
 						ch.material.emissive.setHex(0.5, 0.5, 0.5)
 					}
 				})
@@ -1102,10 +1102,10 @@ class MainScene extends Scene3D {
 			this.p_speed_y.z = this.ang_speed.y * 0.25;
 			this.p_speed_y.w = -this.ang_speed.y * 0.25;
 
-			this.droneElements.propellerFR.rotation.y -= (p_speed + d_speed_y + this.p_speed_p.x + this.p_speed_r.x + this.p_speed_y.x) * delta;
-			this.droneElements.propellerFL.rotation.y -= (p_speed + d_speed_y + this.p_speed_p.y + this.p_speed_r.y + this.p_speed_y.y) * delta;
-			this.droneElements.propellerBR.rotation.y -= (p_speed + d_speed_y + this.p_speed_p.z + this.p_speed_r.z + this.p_speed_y.z) * delta;
-			this.droneElements.propellerBL.rotation.y -= (p_speed + d_speed_y + this.p_speed_p.w + this.p_speed_r.w + this.p_speed_y.w) * delta;
+			this.droneElements.propellerFR.rotation.y -= (p_speed + d_speed_y*2 + this.p_speed_p.x + this.p_speed_r.x + this.p_speed_y.x) * delta;
+			this.droneElements.propellerFL.rotation.y -= (p_speed + d_speed_y*2 + this.p_speed_p.y + this.p_speed_r.y + this.p_speed_y.y) * delta;
+			this.droneElements.propellerBR.rotation.y -= (p_speed + d_speed_y*2 + this.p_speed_p.z + this.p_speed_r.z + this.p_speed_y.z) * delta;
+			this.droneElements.propellerBL.rotation.y -= (p_speed + d_speed_y*2 + this.p_speed_p.w + this.p_speed_r.w + this.p_speed_y.w) * delta;
 
 			this.tooFast = new Vector3(this.drone.body.velocity.x, this.drone.body.velocity.y, this.drone.body.velocity.z).length() > 9
 			this.drone.body.needUpdate = true;
