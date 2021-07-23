@@ -115,11 +115,14 @@ var ease_func_speed = TWEEN.Easing.Quartic.Out;
 var ease_func_up = TWEEN.Easing.Linear.None;
 var throttle_control = false;
 
-var sound, listener, droneSound;
+var listener, sound, droneSound, helperSound;
 var soundsLoaded = false;
 const sounds = {
 	background: { url: './sounds/music.mp3' },
 	drone: { url: './sounds/drone.mp3' },
+	death: { url: './sounds/death.wav' },
+	consumable: { url: './sounds/consumable.wav' },
+	hit: { url: './sounds/hit.wav' },
 }
 
 const droneColors = ["red", "black", "blue", "green", "white"];
@@ -181,11 +184,37 @@ function playSoundTrack() {
 		droneSound.isPlaying = false;
 		droneSound.setBuffer(sounds.drone.sound);
 		droneSound.setLoop(true);
-		droneSound.setVolume(0.05);
+		droneSound.setVolume(0.025);
 		droneSound.play();
 	}
 }
 
+function playDeathMusic() {
+	if(sound.isPlaying) {
+		playSoundTrack();
+	}
+	helperSound.isPlaying = false;
+	helperSound.setBuffer(sounds.death.sound);
+	helperSound.setLoop(false);
+	helperSound.setVolume(0.3);
+	helperSound.play();
+}
+
+function playConsumableMusic() {
+	helperSound.isPlaying = false;
+	helperSound.setBuffer(sounds.consumable.sound);
+	helperSound.setLoop(false);
+	helperSound.setVolume(0.3);
+	helperSound.play();
+}
+
+function playHitMusic() {
+	helperSound.isPlaying = false;
+	helperSound.setBuffer(sounds.hit.sound);
+	helperSound.setLoop(false);
+	helperSound.setVolume(0.3);
+	helperSound.play();
+}
 
 
 
@@ -264,7 +293,7 @@ class MainScene extends Scene3D {
 			this.camera.add(listener);
 			sound = new THREE.Audio(listener);
 			droneSound = new THREE.Audio(listener);
-			//audioLoader = new THREE.AudioLoader();
+			helperSound = new THREE.Audio(listener);
 		}
 
 		//rain
@@ -534,21 +563,22 @@ class MainScene extends Scene3D {
 					this.physics.destroy(otherObj.body)
 					otherObj.parent.remove(otherObj)
 					console.log('CONSUMABILE HITTATO ' + otherObj.name)
+					playConsumableMusic();
 				} else if (otherObj.name === "PropellerFR" || otherObj.name === "PropellerFL" || otherObj.name === "PropellerBR" || otherObj.name === "PropellerBL") {
 
 				} else if (new Vector3(this.drone.body.velocity.x, this.drone.body.velocity.y, this.drone.body.velocity.z).length() > 8) {
 					this.collisionDrone();
 					console.log('COLLISIONE FORTE')
 
-					context.drone.body.setCollisionFlags(2);
-					context.drone.position.setY(100);
-					context.drone.body.needUpdate = true;
-					context.drone.body.once.update(() => {
-						context.drone.body.setCollisionFlags(0);
-						context.drone.body.setVelocity(0, 0, 0);
-					})
-
-					if (this.lives == 0) {
+					if (this.lives > 0) {
+						context.drone.body.setCollisionFlags(2);
+						context.drone.position.setY(100);
+						context.drone.body.needUpdate = true;
+						context.drone.body.once.update(() => {
+							context.drone.body.setCollisionFlags(0);
+							context.drone.body.setVelocity(0, 0, 0);
+						})
+					} else if (this.lives == 0) {
 						this.freefall = true;
 						this.drone.body.setAngularFactor(1, 1, 1)
 						new TWEEN.Tween(this.speed).to({ x: 0, y: 0, z: 0 }, time_up).start().easing(ease_func_up)
@@ -747,21 +777,22 @@ class MainScene extends Scene3D {
 			}
 		}
 
-		if (this.lives > 0) this.lives -= 1;
-		new Noty({
-			type: 'warning',
-			layout: 'topRight',
-			theme: 'nest',
-			text: 'You lost 1 life',
-			timeout: '3000',
-			progressBar: true,
-			closeWith: ['click'],
-			killer: true,
-		}).show();
-
 		if (this.lives > 0) {
+			this.lives -= 1;
 			var context = this;
 			setTimeout(function () { changeColor(context, 6, 0x000000) }, 500);
+			playHitMusic();
+
+			new Noty({
+				type: 'warning',
+				layout: 'topRight',
+				theme: 'nest',
+				text: 'You lost 1 life',
+				timeout: '3000',
+				progressBar: true,
+				closeWith: ['click'],
+				killer: true,
+			}).show();
 		} else {
 			new Noty({
 				type: 'error',
@@ -773,6 +804,7 @@ class MainScene extends Scene3D {
 				closeWith: ['click'],
 				killer: true,
 			}).show();
+			playDeathMusic();
 		}
 
 	}
@@ -951,7 +983,7 @@ class MainScene extends Scene3D {
 			} else if (difficulty == 2) {
 				difficultyString = "<span style='color: red'>Hard</span>";
 			}
-			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Flight Time: " + Math.round(time) + "s <br>" + "Lives: <span style='color: red'>" + "♥".repeat(this.lives) + "</span><br>Difficulty: "+difficultyString;
+			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Play Time: " + Math.round(time) + "s <br>" + "Lives: <span style='color: red'>" + "♥".repeat(this.lives) + "</span><br>Difficulty: "+difficultyString;
 
 			// this.csm.update(this.camera.matrix);
 		}
