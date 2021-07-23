@@ -201,19 +201,23 @@ function playDeathMusic() {
 }
 
 function playConsumableMusic() {
-	helperSound.isPlaying = false;
-	helperSound.setBuffer(sounds.consumable.sound);
-	helperSound.setLoop(false);
-	helperSound.setVolume(0.3);
-	helperSound.play();
+	if(sound.isPlaying) {
+		helperSound.isPlaying = false;
+		helperSound.setBuffer(sounds.consumable.sound);
+		helperSound.setLoop(false);
+		helperSound.setVolume(0.3);
+		helperSound.play();
+	}
 }
 
 function playHitMusic() {
-	helperSound.isPlaying = false;
-	helperSound.setBuffer(sounds.hit.sound);
-	helperSound.setLoop(false);
-	helperSound.setVolume(0.3);
-	helperSound.play();
+	if(sound.isPlaying) {
+		helperSound.isPlaying = false;
+		helperSound.setBuffer(sounds.hit.sound);
+		helperSound.setLoop(false);
+		helperSound.setVolume(0.3);
+		helperSound.play();
+	}
 }
 
 
@@ -564,6 +568,7 @@ class MainScene extends Scene3D {
 					otherObj.parent.remove(otherObj)
 					console.log('CONSUMABILE HITTATO ' + otherObj.name)
 					playConsumableMusic();
+					this.collected_stars += 1;
 				} else if (otherObj.name === "PropellerFR" || otherObj.name === "PropellerFL" || otherObj.name === "PropellerBR" || otherObj.name === "PropellerBL") {
 
 				} else if (new Vector3(this.drone.body.velocity.x, this.drone.body.velocity.y, this.drone.body.velocity.z).length() > 8) {
@@ -753,6 +758,7 @@ class MainScene extends Scene3D {
 
 	blink_color = 0x000000;
 	lives = 3;
+	collected_stars = 0;
 	isRaining = false;
 	collisionDrone() {
 		function changeColor(context, times, color) {
@@ -983,7 +989,7 @@ class MainScene extends Scene3D {
 			} else if (difficulty == 2) {
 				difficultyString = "<span style='color: red'>Hard</span>";
 			}
-			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Play Time: " + Math.round(time) + "s <br>" + "Lives: <span style='color: red'>" + "♥".repeat(this.lives) + "</span><br>Difficulty: "+difficultyString;
+			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Play Time: " + Math.round(time) + "s <br>" + "Lives: <span style='color: red'>" + "♥".repeat(this.lives) + "</span><br>Difficulty: "+difficultyString+"<br>⭐ x"+this.collected_stars;
 
 			// this.csm.update(this.camera.matrix);
 		}
