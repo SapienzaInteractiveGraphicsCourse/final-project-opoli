@@ -52,6 +52,7 @@ canvas {
     width: 50vw;
     border: 1px solid #000;
     height: 50vh;
+    
 }
 
 .centerer {
@@ -61,4 +62,26 @@ canvas {
     left: 50%;
     -ms-transform: translate(-50%, -50%);
     transform: translate(-50%, -50%);
+    
+}
+
+.selectable {
+    cursor: pointer;
+}
+
+.selectable1:hover:after, 
+.selectable2:hover:after {
+    content: "✓";
+}
+
+.selectable3:hover {
+    background-color: yellowgreen
+}
+
+.selected1:after, .selected2:after {
+    content: "✓";
+}
+
+.selected3 {
+    background-color: yellowgreen
 }

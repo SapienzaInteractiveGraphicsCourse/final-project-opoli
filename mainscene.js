@@ -124,6 +124,7 @@ const sounds = {
 
 const droneColors = ["red", "black", "blue", "green", "white"];
 var chosenColors = [3, 4]; //1st drone, 2nd propellers
+var difficulty = 0; //easy 0, medium 1, hard 2
 
 function colorToHex(color) {
 	if (color == "red") {
@@ -944,7 +945,13 @@ class MainScene extends Scene3D {
 
 			TWEEN.update();
 
-			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Flight Time: " + Math.round(time) + "s <br>" + "Lives: <span style='color: red'>" + "♥".repeat(this.lives) + "</span>";
+			let difficultyString = "<span style='color: green'>Easy</span>";
+			if(difficulty == 1) {
+				difficultyString = "<span style='color: orange'>Medium</span>";
+			} else if (difficulty == 2) {
+				difficultyString = "<span style='color: red'>Hard</span>";
+			}
+			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Flight Time: " + Math.round(time) + "s <br>" + "Lives: <span style='color: red'>" + "♥".repeat(this.lives) + "</span><br>Difficulty: "+difficultyString;
 
 			// this.csm.update(this.camera.matrix);
 		}
@@ -957,6 +964,14 @@ document.getElementById("startbutton").addEventListener("click", () => {
 	//playSoundTrack();
 	chosenColors[0] = droneColors.indexOf(document.getElementById("startbutton").getAttribute("data-drone-color"))
 	chosenColors[1] = droneColors.indexOf(document.getElementById("startbutton").getAttribute("data-propeller-color"))
+	let n_difficulty = document.getElementById("startbutton").getAttribute("data-difficulty")
+	if(n_difficulty == "easy") {
+		difficulty = 0;
+	} else if(n_difficulty == "medium") {
+		difficulty = 1;
+	} else {
+		difficulty = 2;
+	}
 
 	PhysicsLoader('./libs/ammo_new', () => {
 		project = new Project({ antialias: true, maxSubSteps: 1, fixedTimeStep: 1 / 960, scenes: [MainScene], gravity: { x: 0, y: -9.81, z: 0 } })

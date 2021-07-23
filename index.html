@@ -13,8 +13,30 @@
 		var elements = document.getElementsByClassName("selectable");
 
 		var myFunction = function() {
-			if(this.getAttribute("data-drone-color")) document.getElementById("startbutton").setAttribute("data-drone-color", this.getAttribute("data-drone-color"))
-			if(this.getAttribute("data-propeller-color")) document.getElementById("startbutton").setAttribute("data-propeller-color", this.getAttribute("data-propeller-color"))
+			if(this.getAttribute("data-drone-color")) 
+			{
+				document.getElementById("startbutton").setAttribute("data-drone-color", this.getAttribute("data-drone-color"))
+				for (var i = 0; i < elements.length; i++) {
+					elements[i].classList.remove("selected1");
+				}
+				this.classList.add("selected1");
+			}
+			if(this.getAttribute("data-propeller-color")) {
+				document.getElementById("startbutton").setAttribute("data-propeller-color", this.getAttribute("data-propeller-color"))
+				for (var i = 0; i < elements.length; i++) {
+					elements[i].classList.remove("selected2");
+				}
+				this.classList.add("selected2");
+			}
+			if(this.getAttribute("data-difficulty")) {
+				document.getElementById("startbutton").setAttribute("data-difficulty", this.getAttribute("data-difficulty"))
+				for (var i = 0; i < elements.length; i++) {
+					elements[i].classList.remove("selected3");
+				}
+				this.classList.add("selected3");
+			}
+			
+			
 		};
 
 		for (var i = 0; i < elements.length; i++) {
@@ -28,22 +50,29 @@
 		<div  class="centerer" ><h1 style="text-decoration: underline;">OPOLI's Drone Adventures</h1>
 		<br><br><br>
 		<h2>Select Drone Color</h2>
-		<div data-drone-color="red" class="selectable" style="float: left; margin: 25px; background-color: red; width: 40px; height: 40px; border: 1px solid #000" ></div>
-		<div data-drone-color="black" class="selectable" style="float: left; margin: 25px; background-color: black; width: 40px; height: 40px; border: 1px solid #000"  ></div>
-		<div data-drone-color="blue" class="selectable" style="float: left; margin: 25px; background-color: blue; width: 40px; height: 40px; border: 1px solid #000"  ></div>
-		<div data-drone-color="green" class="selectable" style="float: left; margin: 25px; background-color: green; width: 40px; height: 40px; border: 1px solid #000"  ></div>
-		<div data-drone-color="white" class="selectable" style="float: left; margin: 25px; background-color: white; width: 40px; height: 40px; border: 1px solid #000"  ></div>
+		<div data-drone-color="black" class="selectable selectable1 selected1" style="float: left; margin: 25px; background-color: black; color: #fff; width: 40px; height: 40px; border: 1px solid #000;  font-size: 30px"  ></div>
+		<div data-drone-color="red" class="selectable selectable1" style="float: left; margin: 25px; background-color: red; width: 40px; height: 40px; border: 1px solid #000; font-size: 30px" ></div>
+		<div data-drone-color="blue" class="selectable selectable1" style="float: left; margin: 25px; background-color: blue; width: 40px; height: 40px; border: 1px solid #000;  font-size: 30px"  ></div>
+		<div data-drone-color="green" class="selectable selectable1" style="float: left; margin: 25px; background-color: green; width: 40px; height: 40px; border: 1px solid #000;  font-size: 30px"  ></div>
+		<div data-drone-color="white" class="selectable selectable1" style="float: left; margin: 25px; background-color: white; width: 40px; height: 40px; border: 1px solid #000;  font-size: 30px"  ></div>
 		<div style="clear: both"></div>
 
 		<h2>Select Propeller Color</h2>
-		<div data-propeller-color="red" class="selectable" style="float: left; margin: 25px; background-color: red; width: 40px; height: 40px; border: 1px solid #000" ></div>
-		<div  data-propeller-color="black" class="selectable" style="float: left; margin: 25px; background-color: black; width: 40px; height: 40px; border: 1px solid #000" ></div>
-		<div  data-propeller-color="blue" class="selectable" style="float: left; margin: 25px; background-color: blue; width: 40px; height: 40px; border: 1px solid #000" ></div>
-		<div  data-propeller-color="green" class="selectable" style="float: left; margin: 25px; background-color: green; width: 40px; height: 40px; border: 1px solid #000" ></div>
-		<div data-propeller-color="white" class="selectable" style="float: left; margin: 25px; background-color: white; width: 40px; height: 40px; border: 1px solid #000" ></div>
+		<div  data-propeller-color="black" class="selectable selectable2 selected2" style="float: left; margin: 25px; background-color: black; color: #fff; width: 40px; height: 40px; border: 1px solid #000;  font-size: 30px" ></div>
+		<div data-propeller-color="red" class="selectable selectable2" style="float: left; margin: 25px; background-color: red; width: 40px; height: 40px; border: 1px solid #000;  font-size: 30px" ></div>
+		<div  data-propeller-color="blue" class="selectable selectable2" style="float: left; margin: 25px; background-color: blue; width: 40px; height: 40px; border: 1px solid #000;  font-size: 30px" ></div>
+		<div  data-propeller-color="green" class="selectable selectable2" style="float: left; margin: 25px; background-color: green; width: 40px; height: 40px; border: 1px solid #000;  font-size: 30px" ></div>
+		<div data-propeller-color="white" class="selectable selectable2" style="float: left; margin: 25px; background-color: white; width: 40px; height: 40px; border: 1px solid #000;  font-size: 30px" ></div>
 		<div style="clear: both"></div>
+
+		<h2>Choose Difficulty</h2>
+		<div data-difficulty="easy" class="selectable selectable3" style="float: left; padding: 30px; margin: 25px;  border: 1px solid green" >Easy</div>
+		<div  data-difficulty="medium" class="selectable selectable3 selected3" style="float: left; padding: 30px; margin: 25px; border: 1px solid orange" >Medium</div>
+		<div  data-difficulty="hard" class="selectable selectable3" style="float: left; padding:30px; margin: 25px; border: 1px solid red" >Hard</div>
+		<div style="clear: both"></div>
+
 		<br><br><br>
-		<button data-drone-color="black" data-propeller-color="black" style="width: 100px; height: 100px; font-size: 24px" id="startbutton">Start</button>
+		<button data-drone-color="black" data-propeller-color="black" data-difficulty="medium" style="width: 100px; height: 100px; font-size: 24px" id="startbutton">Start</button>
 		</div>
 	</div>
 	<div id="menu">
