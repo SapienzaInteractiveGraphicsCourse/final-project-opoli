@@ -10,7 +10,7 @@ const {
 	PointerDrag
 } = ENABLE3D
 import TWEEN, { Easing, Tween } from './libs/tween.esm.js';
-import { AxesHelper, BoxGeometry, LineBasicMaterial, Mesh, MeshPhongMaterial, MultiplyOperation, Plane, PlaneGeometry, TextureLoader, Vector3 } from './three.js-master/build/three.module.js';
+import { AxesHelper, BoxGeometry, Color, LineBasicMaterial, Mesh, MeshPhongMaterial, MultiplyOperation, Plane, PlaneGeometry, PointLight, TextureLoader, Vector3 } from './three.js-master/build/three.module.js';
 import { PointerLockControls } from './three.js-master/examples/jsm/controls/PointerLockControls.js';
 import { Water } from './three.js-master/examples/js/objects/Water.js';
 import { CSM } from './three.js-master/examples/jsm/csm/CSM.js'
@@ -117,7 +117,6 @@ const time_yaw = 200;
 var ease_func = TWEEN.Easing.Elastic.Out;
 var ease_func_speed = TWEEN.Easing.Quartic.Out;
 var ease_func_up = TWEEN.Easing.Linear.None;
-var throttle_control = false;
 
 var listener, sound, droneSound, helperSound, rainSound, rainMustPlay = false, droneFirstLift = false;
 var soundsLoaded = false;
@@ -173,8 +172,8 @@ function playSoundTrack() {
 	if (sound.isPlaying) {
 		document.getElementById("musicbutton").src = './menu/soundoff.png';
 		sound.pause();
-		if(droneFirstLift) droneSound.pause();
-		if(rainSound.isPlaying) rainSound.stop();
+		if (droneFirstLift) droneSound.pause();
+		if (rainSound.isPlaying) rainSound.stop();
 	} else {
 		document.getElementById("musicbutton").src = './menu/soundin.png';
 		sound.isPlaying = false;
@@ -182,7 +181,7 @@ function playSoundTrack() {
 		sound.setLoop(true);
 		sound.setVolume(0.15);
 		sound.play();
-		if(droneFirstLift) {
+		if (droneFirstLift) {
 			droneSound.isPlaying = false;
 			droneSound.setBuffer(sounds.drone.sound);
 			droneSound.setLoop(true);
@@ -227,16 +226,16 @@ function playConsumableMusic() {
 
 function playRainMusic() {
 	if (sound.isPlaying) {
-		if(!rainMustPlay) {
-			if(rainSound.isPlaying) rainSound.stop()
+		if (!rainMustPlay) {
+			if (rainSound.isPlaying) rainSound.stop()
 		} else {
 			rainSound.isPlaying = false;
 			rainSound.setBuffer(sounds.rain.sound);
 			rainSound.setLoop(false);
 			rainSound.setVolume(0.45);
 			rainSound.play();
-		}	
-	} 
+		}
+	}
 }
 
 function playHitMusic() {
@@ -267,7 +266,7 @@ class MainScene extends Scene3D {
 		{
 			this.camera = new THREE.PerspectiveCamera(60, this.camera.aspect, 0.1, 1000);
 			this.camera.position.set(-109.12401580810547, 213.40965270996094, -266.63372802734375);
-			this.camera.lookAt(0,0,0)
+			this.camera.lookAt(0, 0, 0)
 
 
 
@@ -410,7 +409,7 @@ class MainScene extends Scene3D {
 	max_speed_y = 15;
 
 	applyTweens(key) {
-		if(!droneFirstLift) {
+		if (!droneFirstLift) {
 			droneFirstLift = true
 			playSoundTrack()
 			playSoundTrack()
@@ -434,16 +433,15 @@ class MainScene extends Scene3D {
 		];
 		if (inputs.e) tweens.e = new TWEEN.Tween(this.ang_speed).to({ y: -Math.PI }, time_yaw).start().easing(ease_func_up)
 		if (inputs.q) tweens.q = new TWEEN.Tween(this.ang_speed).to({ y: Math.PI }, time_yaw).start().easing(ease_func_up)
-		if (throttle_control) return;
 		if (inputs[" "] && this.speed.y < this.max_speed_y && !tweens[" "]) {
-			tweens[" "] = new TWEEN.Tween(this.speed).to({ y: '+10' }, time_up).start().easing(ease_func_up).onUpdate(() => {
+			tweens[" "] = new TWEEN.Tween(this.speed).to({ y: '+15' }, time_up).start().easing(ease_func_up).onUpdate(() => {
 				if (this.speed.y < this.max_speed_y) return;
 				tweens[" "].stop();
 				tweens[" "] = null;
 			});
 		}
 		if (inputs["<"] && this.speed.y > 0 && !tweens["<"]) {
-			tweens["<"] = new TWEEN.Tween(this.speed).to({ y: '-10' }, time_up).start().easing(ease_func_up).onUpdate(() => {
+			tweens["<"] = new TWEEN.Tween(this.speed).to({ y: '-15' }, time_up).start().easing(ease_func_up).onUpdate(() => {
 				if (this.speed.y > 0) return;
 				tweens["<"].stop();
 				tweens["<"] = null;
@@ -536,9 +534,9 @@ class MainScene extends Scene3D {
 		directionalLight.shadow.camera.bottom = -50
 		directionalLight.shadow.camera.left = -50
 		directionalLight.shadow.camera.right = 50
-		directionalLight.shadow.mapSize.set(2048,2048)
-		directionalLight.position.x+=35
-		directionalLight.position.y+=1
+		directionalLight.shadow.mapSize.set(2048, 2048)
+		directionalLight.position.x += 35
+		directionalLight.position.y += 1
 
 		// rainlight
 		// this.flash = new THREE.PointLight(0x062d89, 30, 750, 1.7);
@@ -561,8 +559,6 @@ class MainScene extends Scene3D {
 			collisionFlags: 1,
 			mass: 0
 		})
-
-		
 
 		const addCity = async () => {
 			var tex_map, tex_normal_map;
@@ -608,36 +604,6 @@ class MainScene extends Scene3D {
 						});
 
 						child.material.color.setHex(0xffffff);
-
-					} else if (child.name.includes("Pink") || child.name.includes("Magenta")) {
-
-					} else if (child.name.includes("Cyan")) {
-						/*
-						var water = new Water(child.geometry, {
-							textureWidth: 2048,
-							textureHeight: 2048,
-							waterNormals: normal,
-							alpha: 0.9,
-							fog: true,
-							distortionScale: 15.0,
-							sunDirection: c.normalize(),
-							sunColor: 0x7f7f7f,
-							waterColor: 0x001e0f,
-							side: THREE.DoubleSide
-						});
-						water.matrixAutoUpdate = false;
-						water.rotationAutoUpdate = false;
-						water.parent = child.parent;
-						water.updateMatrix();
-						const p = child.parent;
-						for (let i = 0; i < p.children.length; i++) {
-							const ch = p.children[i];
-							if (ch.name === child.name) {
-								p.remove(ch);
-								p.add(water);
-							}
-						}
-						*/
 					} else if (child.material.color && child.material.color.r === 0.5684522089150544) {
 						child.material.color.setRGB(0.752941, 0.752941, 0.752941)
 					}
@@ -661,8 +627,8 @@ class MainScene extends Scene3D {
 		}
 		const addDrone = async () => {
 			var object;
-			if(quadricopter) {
-				object = await this.load.gltf('drone2') 
+			if (quadricopter) {
+				object = await this.load.gltf('drone2')
 			}
 			else {
 				object = await this.load.gltf('drone')
@@ -674,7 +640,7 @@ class MainScene extends Scene3D {
 			this.drone.name = 'drone'
 			this.drone.add(drone)
 			this.drone.position.set(35, 1, 0)
-			if(quadricopter) this.drone.scale.set(0.7, 0.7, 0.7);
+			if (quadricopter) this.drone.scale.set(0.7, 0.7, 0.7);
 			// add shadow
 			this.drone.traverse(child => {
 				if (child.isMesh) {
@@ -775,7 +741,7 @@ class MainScene extends Scene3D {
 			this.thirdPersonCamera.SetTarget(this.drone.position);
 
 
-			
+
 			document.addEventListener('keydown', function (event) {
 				let key = event.key.toLowerCase();
 				if (context.freefall || !context.gameStart) return;
@@ -858,12 +824,12 @@ class MainScene extends Scene3D {
 
 			const spotLight = new THREE.SpotLight(0xeeeea0);
 
-			spotLight.angle = Math.PI/4;
+			spotLight.angle = Math.PI / 4;
 			spotLight.penumbra = 0.1;
 			spotLight.decay = 2;
 			spotLight.distance = 50;
-			spotLight.position.set(0,0,1)
-			spotLight.target.position.set(0,0,10)
+			spotLight.position.set(0, 0, 1)
+			spotLight.target.position.set(0, 0, 10)
 
 			spotLight.castShadow = true;
 			spotLight.shadow.mapSize.width = 512;
@@ -1095,7 +1061,7 @@ class MainScene extends Scene3D {
 				dayTime = 2;
 			}
 
-			if(document.getElementById("startbutton").getAttribute("data-quadricopter") == "true") quadricopter = true;
+			if (document.getElementById("startbutton").getAttribute("data-quadricopter") == "true") quadricopter = true;
 
 			this.lightsController.directionalLight.color.setRGB(...this.lightColors[dayTime].dir)
 			this.lightsController.ambientLight.color.setRGB(...this.lightColors[dayTime].amb)
@@ -1104,7 +1070,7 @@ class MainScene extends Scene3D {
 			this.sky.material.uniforms.topColor.value.setRGB(...this.dayTimeColors[dayTime].topColor)
 			this.sky.material.uniforms.uniformsNeedUpdate = true;
 
-			addDrone().then( () => {
+			addDrone().then(() => {
 				context.drone.traverse(child => {
 					if (child.isMesh) {
 						if (child.name != 'Mesh_5')
@@ -1235,7 +1201,7 @@ class MainScene extends Scene3D {
 			project.projectConfig.maxSubSteps /= 2
 			project.projectConfig.fixedTimeStep /= 2
 		}
-		if(this.city) {
+		if (this.city) {
 			if (!this.gameStarted) {
 				document.getElementById("menu").style.display = 'block';
 				document.getElementById("fuel").style.display = 'block';
@@ -1313,17 +1279,21 @@ class MainScene extends Scene3D {
 			sin_rot_y = Math.sin(this.drone.rotation.y);
 
 			// propellers
-			// this.speed.x*=3
-			// this.speed.z*=3
 			const p_speed = this.speed.y * 10;
 			if (!this.freefall) {
+				var correctionX = 0, correctionZ = 0
+				if (!(inputs.w || inputs.s || inputs.a || inputs.d)) {
+					let correction = new THREE.Euler().setFromQuaternion(this.drone.quaternion, 'XZY')
+					correctionX = -correction.x
+					correctionZ = -correction.z;
+				}
 				this.drone.body.applyForceY(p_speed * delta / 10 + d_speed_y * 2 - this.drone.body.velocity.y * 0.001)
 				this.drone.body.setAngularVelocityY(d_ang.y / delta);
-				this.drone.body.setAngularVelocityX((cos_rot_y * d_ang.x + sin_rot_y * d_ang.z) / delta);
-				this.drone.body.setAngularVelocityZ((cos_rot_y * d_ang.z - sin_rot_y * d_ang.x) / delta);
+				this.drone.body.setAngularVelocityX((cos_rot_y * d_ang.x + sin_rot_y * d_ang.z) / delta + correctionX);
+				this.drone.body.setAngularVelocityZ((cos_rot_y * d_ang.z - sin_rot_y * d_ang.x) / delta + correctionZ);
 
-				this.drone.body.setVelocityX((cos_rot_y * this.speed.x + sin_rot_y * this.speed.z) * Math.min(this.speed.y / this.max_speed_y * 2, 1));
-				this.drone.body.setVelocityZ((cos_rot_y * this.speed.z - sin_rot_y * this.speed.x) * Math.min(this.speed.y / this.max_speed_y * 2, 1));
+				this.drone.body.setVelocityX((cos_rot_y * this.speed.x + sin_rot_y * this.speed.z) * Math.min(this.speed.y / this.max_speed_y * 2, 1)*1.3);
+				this.drone.body.setVelocityZ((cos_rot_y * this.speed.z - sin_rot_y * this.speed.x) * Math.min(this.speed.y / this.max_speed_y * 2, 1)*1.3);
 			}
 
 			this.p_speed_p.x = -d_ang.x / delta;
@@ -1339,7 +1309,7 @@ class MainScene extends Scene3D {
 			this.p_speed_y.z = this.ang_speed.y * 0.25;
 			this.p_speed_y.w = -this.ang_speed.y * 0.25;
 
-			if(quadricopter) {
+			if (quadricopter) {
 				this.droneElements.propellerFR.rotation.z -= (p_speed + d_speed_y * 2 + this.p_speed_p.x + this.p_speed_r.x + this.p_speed_y.x) * delta;
 				this.droneElements.propellerFL.rotation.z += (p_speed + d_speed_y * 2 + this.p_speed_p.y + this.p_speed_r.y + this.p_speed_y.y) * delta;
 				this.droneElements.propellerBR.rotation.z += (p_speed + d_speed_y * 2 + this.p_speed_p.z + this.p_speed_r.z + this.p_speed_y.z) * delta;
@@ -1350,9 +1320,9 @@ class MainScene extends Scene3D {
 				this.droneElements.propellerBR.rotation.y -= (p_speed + d_speed_y * 2 + this.p_speed_p.z + this.p_speed_r.z + this.p_speed_y.z) * delta;
 				this.droneElements.propellerBL.rotation.y -= (p_speed + d_speed_y * 2 + this.p_speed_p.w + this.p_speed_r.w + this.p_speed_y.w) * delta;
 			}
-			
 
-			this.tooFast = new Vector3(this.drone.body.velocity.x, this.drone.body.velocity.y, this.drone.body.velocity.z).length() > 9
+
+			this.tooFast = new Vector3(this.drone.body.velocity.x, this.drone.body.velocity.y, this.drone.body.velocity.z).length() > 11
 			this.drone.body.needUpdate = true;
 			this.old_ang.set(this.ang.x * Math.min(this.speed.y / this.max_speed_y * 2, 1), this.ang.y, this.ang.z * Math.min(this.speed.y / this.max_speed_y * 2, 1));
 			this.old_speed_y = this.speed.y;
@@ -1399,7 +1369,7 @@ class MainScene extends Scene3D {
 			} else {
 				if (this.flash.visible == true) {
 					let tColors = { bottomColor: [this.sky.material.uniforms.bottomColor.value.r, this.sky.material.uniforms.bottomColor.value.g, this.sky.material.uniforms.bottomColor.value.b], topColor: [this.sky.material.uniforms.topColor.value.r, this.sky.material.uniforms.topColor.value.g, this.sky.material.uniforms.topColor.value.b] }
-					new TWEEN.Tween({ int: this.intensity, hemInt: this.hemIntensity, colors: tColors, spotInt: 1 }).to({ int: 0.65, hemInt: 0.2, colors: this.dayTimeColors[dayTime], spotInt: 0}, 3000).start().onUpdate((obj) => {
+					new TWEEN.Tween({ int: this.intensity, hemInt: this.hemIntensity, colors: tColors, spotInt: 1 }).to({ int: 0.65, hemInt: 0.2, colors: this.dayTimeColors[dayTime], spotInt: 0 }, 3000).start().onUpdate((obj) => {
 						this.lightsController.directionalLight.intensity = obj.int
 						this.lightsController.ambientLight.intensity = obj.int
 						this.lightsController.hemisphereLight.intensity = obj.hemInt
@@ -1412,9 +1382,9 @@ class MainScene extends Scene3D {
 				}
 				this.flash.visible = false
 			}
-			if (dayTime == 1) this.lightsController.directionalLight.position.set(this.drone.position.x+200, this.drone.position.y+100, this.drone.position.z+50)
-			else if (dayTime == 0) this.lightsController.directionalLight.position.set(this.drone.position.x+100, this.drone.position.y+200, this.drone.position.z+100)
-			else  this.lightsController.directionalLight.position.set(this.drone.position.x-100, this.drone.position.y+200, this.drone.position.z+100)
+			if (dayTime == 1) this.lightsController.directionalLight.position.set(this.drone.position.x + 200, this.drone.position.y + 100, this.drone.position.z + 50)
+			else if (dayTime == 0) this.lightsController.directionalLight.position.set(this.drone.position.x + 100, this.drone.position.y + 200, this.drone.position.z + 100)
+			else this.lightsController.directionalLight.position.set(this.drone.position.x - 100, this.drone.position.y + 200, this.drone.position.z + 100)
 			TWEEN.update();
 
 			let difficultyString = "<span style='color: green'>Easy</span>";
