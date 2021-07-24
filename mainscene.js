@@ -17,10 +17,10 @@ import { CSM } from './three.js-master/examples/jsm/csm/CSM.js'
 import { CSMHelper } from './three.js-master/examples/jsm/csm/CSMHelper.js'
 
 import { EffectComposer } from './three.js-master/examples/jsm/postprocessing/EffectComposer.js';
-			import { RenderPass } from './three.js-master/examples/jsm/postprocessing/RenderPass.js';
-			import { ShaderPass } from './three.js-master/examples/jsm/postprocessing/ShaderPass.js';
-			import { OutlinePass } from './three.js-master/examples/jsm/postprocessing/OutlinePass.js';
-			import { FXAAShader } from './three.js-master/examples/jsm/shaders/FXAAShader.js';
+import { RenderPass } from './three.js-master/examples/jsm/postprocessing/RenderPass.js';
+import { ShaderPass } from './three.js-master/examples/jsm/postprocessing/ShaderPass.js';
+import { OutlinePass } from './three.js-master/examples/jsm/postprocessing/OutlinePass.js';
+import { FXAAShader } from './three.js-master/examples/jsm/shaders/FXAAShader.js';
 
 // /**
 //  * Is touch device?
@@ -135,6 +135,7 @@ const sounds = {
 const droneColors = ["red", "black", "blue", "green", "white"];
 var chosenColors = [3, 4]; //1st drone, 2nd propellers
 var difficulty = 3; //easy 0, medium 1, hard 2
+var dayTime = 2; // 0 day, 1 twilight, 2 night
 const targetCoins = [3, 5, 10, 0];
 
 function colorToHex(color) {
@@ -336,23 +337,23 @@ class MainScene extends Scene3D {
 
 		// postprocessing
 
-		this.composer = new EffectComposer( this.renderer );
+		this.composer = new EffectComposer(this.renderer);
 
-		const renderPass = new RenderPass( this.scene, this.camera );
-		this.composer.addPass( renderPass );
+		const renderPass = new RenderPass(this.scene, this.camera);
+		this.composer.addPass(renderPass);
 
-		this.outlinePass = new OutlinePass( new THREE.Vector2( window.innerWidth, window.innerHeight ), this.scene, this.camera );
+		this.outlinePass = new OutlinePass(new THREE.Vector2(window.innerWidth, window.innerHeight), this.scene, this.camera);
 		this.outlinePass.edgeStrength = 4.0;
 		this.outlinePass.edgeGlow = 1.0;
 		this.outlinePass.edgeThickness = 4.0;
 		this.outlinePass.pulsePeriod = 0;
-		this.outlinePass.visibleEdgeColor.set( '#196e41' );
-		this.outlinePass.hiddenEdgeColor.set( '#196e41' );
-		this.composer.addPass( this.outlinePass );
+		this.outlinePass.visibleEdgeColor.set('#196e41');
+		this.outlinePass.hiddenEdgeColor.set('#196e41');
+		// this.composer.addPass(this.outlinePass);
 
-		let effectFXAA = new ShaderPass( FXAAShader );
-		effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
-		this.composer.addPass( effectFXAA );
+		let effectFXAA = new ShaderPass(FXAAShader);
+		effectFXAA.uniforms['resolution'].value.set(1 / window.innerWidth, 1 / window.innerHeight);
+		this.composer.addPass(effectFXAA);
 	}
 
 	async preload() {
@@ -427,25 +428,92 @@ class MainScene extends Scene3D {
 		const { lights } = await this.warpSpeed('-ground', '-orbitControls')
 
 		let sky = this.scene.children[1]
+
+		// daytime colors
+		const nightColors = {
+			bottomColor: [0, 0, 0],
+			topColor: [0, 0, 62 / 255]
+		}
+		const twilightColors = {
+			bottomColor: [220 / 255, 84 / 255, 12 / 255],
+			topColor: [41 / 255, 132 / 255, 209 / 255]
+		}
+		const dayColors = {
+			bottomColor: [0.9294117647058824, 0.9607843137254902, 1],
+			topColor: [0, 0.4666666666666667, 1]
+		}
+		const rainNightColors = {
+			bottomColor: [0, 0, 0],
+			topColor: [62 / 255 * 0.2, 62 / 255 * 0.2, 62 / 255 * 0.3]
+		}
+		const rainTwilightColors = {
+			bottomColor: [220 / 255 * 0.3, 84 / 255 * 0.3, 12 / 255 * 0.3],
+			topColor: [92 / 255 * 0.5, 69 / 255 * 0.5, 57 / 255 * 0.5]
+		}
+		const rainDayColors = {
+			bottomColor: [96 / 255 * 0.5, 96 / 255 * 0.5, 106 / 255 * 0.5],
+			topColor: [96 / 255, 96 / 255, 106 / 255]
+		}
+		this.dayTimeColors = {
+			0: dayColors,
+			1: twilightColors,
+			2: nightColors
+		}
+		this.rainColors = {
+			0: rainDayColors,
+			1: rainTwilightColors,
+			2: rainNightColors
+		}
+
+		sky.material.uniforms.bottomColor.value.setRGB(...this.dayTimeColors[dayTime].bottomColor)
+		sky.material.uniforms.topColor.value.setRGB(...this.dayTimeColors[dayTime].topColor)
+		console.log(sky.material.uniforms)
+		// sky.material.uniforms.uniformsNeedUpdate = true;
+
 		this.physics.add.existing(sky, {
 			shape: 'concave',
 			collisionFlags: 1,
 			mass: 0
 		})
+		this.sky = sky
 
 		const { hemisphereLight, ambientLight, directionalLight } = lights
-		const intensity = 0.65
-		hemisphereLight.intensity = 0
-		ambientLight.intensity = intensity
-		directionalLight.intensity = intensity
+		this.intensity = 0.65
+		this.hemIntensity = 0.2
+		hemisphereLight.intensity = this.hemIntensity
+		ambientLight.intensity = this.intensity
+		directionalLight.intensity = this.intensity
 		this.directional = directionalLight
+		this.lightsController = lights
+		this.lightColors = {
+			0: {
+				hem: this.dayTimeColors[0].bottomColor,
+				amb: this.dayTimeColors[0].bottomColor,
+				dir: this.dayTimeColors[0].bottomColor
+			},
+			1: {
+				hem: this.dayTimeColors[1].topColor,
+				amb: this.dayTimeColors[1].bottomColor,
+				dir: this.dayTimeColors[1].topColor
+			},
+			2: {
+				hem: [0.1, 0.1, 0.1],
+				amb: [0.05, 0.05, 0.15],
+				dir: [0.1, 0.1, 0.1]
+			},
+		}
+		directionalLight.color.setRGB(...this.lightColors[dayTime].dir)
+		ambientLight.color.setRGB(...this.lightColors[dayTime].amb)
+		hemisphereLight.color.setRGB(...this.lightColors[dayTime].hem)
 
 		// rainlight
-		this.flash = new THREE.PointLight(0x062d89, 30, 750, 1.7);
+		// this.flash = new THREE.PointLight(0x062d89, 30, 750, 1.7);
+		this.flash = new THREE.PointLight(0xb9fae8, 30, 750, 1.7);
 		this.flash.position.set(800, 800, 800);
 		this.scene.add(this.flash);
+		this.flash.visible = false;
 
-		
+
 
 		// ground
 		this.ground = new ExtendedObject3D()
@@ -464,7 +532,7 @@ class MainScene extends Scene3D {
 
 		const addCity = async () => {
 			var tex_map, tex_normal_map;
-			
+
 
 			const object = await this.load.gltf('city')
 			const scene = object.scenes[0]
@@ -483,35 +551,32 @@ class MainScene extends Scene3D {
 							tex_map = texture
 							tex_map.wrapS = THREE.RepeatWrapping;
 							tex_map.wrapT = THREE.RepeatWrapping;
-			
+
 							tex_map.repeat.set(0.5, 0.5);
-			
+
 							tex_map.anisotropy = 4;
 
 							child.material.map = tex_map;
 							child.material.map.needsUpdate = true
-							
+
 						});
 						this.imageLoader.load('./textures/grasslight-big-nm.jpg', (texture) => {
 							tex_normal_map = texture
 							tex_normal_map.wrapS = THREE.RepeatWrapping;
 							tex_normal_map.wrapT = THREE.RepeatWrapping;
-			
+
 							tex_normal_map.repeat.set(0.5, 0.5);
-			
+
 							tex_normal_map.anisotropy = 4;
 
 							child.material.normalMap = tex_normal_map;
 							child.material.normalMap.needsUpdate = true
 						});
-			
+
 						child.material.color.setHex(0xffffff);
 
 					} else if (child.name.includes("Pink") || child.name.includes("Magenta")) {
-						// console.log(child.name)
-						this.outlinePass.selectedObjects.push(child)
-						console.log(this.outlinePass.selectedObjects)
-						
+
 					} else if (child.name.includes("Cyan")) {
 						/*
 						var water = new Water(child.geometry, {
@@ -560,15 +625,6 @@ class MainScene extends Scene3D {
 			})
 		}
 		const addDrone = async () => {
-						
-			var sphereGeom = new THREE.SphereGeometry(1, 1, 1);
-    
-            var moonMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
-            var moon = new THREE.Mesh(sphereGeom, moonMaterial);
-            moon.position.set(35,1,0);
-            this.scene.add(moon);
-			this.outlinePass.selectedObjects = [moon]
-			
 			const object = await this.load.gltf('drone')
 			const drone = object.scene.children[0]
 
@@ -576,7 +632,6 @@ class MainScene extends Scene3D {
 			this.drone.name = 'drone'
 			this.drone.add(drone)
 			this.drone.position.set(35, 1, 0)
-			this.outlinePass.selectedObjects.push(this.drone)
 			// add shadow
 			this.drone.traverse(child => {
 				if (child.isMesh) {
@@ -621,23 +676,23 @@ class MainScene extends Scene3D {
 
 						if (this.collected_coins >= targetCoins[difficulty]) {
 							let difficulty_msg = "It was too easy, right? Retry with MEDIUM!";
-							if(difficulty == 1) {
+							if (difficulty == 1) {
 								difficulty_msg = "Good job, but you can do better. Try HARD!";
-							} else if(difficulty == 2) {
+							} else if (difficulty == 2) {
 								difficulty_msg = "WOW. You're a master of drones! You deserve to be a honored citizen of OPOLI."
 							}
 							new Noty({
 								type: 'success',
 								layout: 'center',
 								theme: 'nest',
-								text: 'You won. '+difficulty_msg,
+								text: 'You won. ' + difficulty_msg,
 								timeout: '10000',
 								progressBar: true,
 								closeWith: ['click'],
 								killer: "winqueue",
 							}).show();
 							playWinMusic();
-							setTimeout(() => {location.reload()}, 10000)
+							setTimeout(() => { location.reload() }, 10000)
 						}
 					} else if (otherObj.name.includes("tank")) {
 						this.tanks--;
@@ -645,7 +700,7 @@ class MainScene extends Scene3D {
 					}
 
 				} else if (this.tooFast) {
-					if(event != "start") return;
+					if (event != "start") return;
 					this.collisionDrone();
 					console.log('COLLISIONE FORTE')
 
@@ -781,7 +836,7 @@ class MainScene extends Scene3D {
 				}
 			});
 
-			const spotLight = new THREE.SpotLight( 0xff0000 );
+			const spotLight = new THREE.SpotLight(0xff0000);
 
 			spotLight.angle = Math.PI / 4;
 			spotLight.penumbra = 0.1;
@@ -795,7 +850,7 @@ class MainScene extends Scene3D {
 			spotLight.shadow.camera.far = 50;
 			spotLight.shadow.focus = 1;
 
-			this.drone.add( spotLight );
+			this.drone.add(spotLight);
 		}
 		const addWater = async () => {
 
@@ -855,7 +910,9 @@ class MainScene extends Scene3D {
 					if (ch.isMesh) {
 						ch.material.metalness = 0.5
 						ch.material.roughness = 1
-						ch.material.emissive.setHex(0.2, 0.2, 0.2)
+						if (dayTime == 2) {
+							ch.material.emissive.setHex(0xbbbb00)
+						}
 					}
 				})
 				bitcoin.scale.set(0.07, 0.07, 0.07)
@@ -905,7 +962,9 @@ class MainScene extends Scene3D {
 						ch.material.roughness = 1
 						ch.material.map = null
 						ch.material.color.setHex(0x00ff00)
-						ch.material.emissive.setHex(0.5, 0.5, 0.5)
+						if (dayTime == 2) {
+							ch.material.emissive.setHex(0x00bb00)
+						}
 					}
 				})
 				tank.scale.set(0.1, 0.1, 0.1)
@@ -955,7 +1014,9 @@ class MainScene extends Scene3D {
 						ch.material.roughness = 1
 						ch.material.map = null
 						ch.material.color.setHex(0xff0000)
-						ch.material.emissive.setHex(0.5, 0.5, 0.5)
+						if (dayTime == 2) {
+							ch.material.emissive.setHex(0xbb0000)
+						}
 					}
 				})
 				heart.scale.set(0.07, 0.07, 0.07)
@@ -1041,6 +1102,7 @@ class MainScene extends Scene3D {
 				killer: true,
 			}).show();
 		} else {
+			this.lives = 0
 			new Noty({
 				type: 'error',
 				layout: 'center',
@@ -1052,7 +1114,7 @@ class MainScene extends Scene3D {
 				killer: true,
 			}).show();
 			playDeathMusic();
-			setTimeout(() => {location.reload()}, 5000)
+			setTimeout(() => { location.reload() }, 5000)
 		}
 
 	}
@@ -1159,8 +1221,8 @@ class MainScene extends Scene3D {
 				this.fuel -= (5 + difficulty * difficulty * 3) * delta;
 				if (this.fuel <= 0) this.collisionDrone()
 			}
-			
-			
+
+
 
 			this.thirdPersonCamera.Update(delta, this.theta, this.phi);
 
@@ -1178,7 +1240,7 @@ class MainScene extends Scene3D {
 			// this.speed.z*=3
 			const p_speed = this.speed.y * 10;
 			if (!this.freefall) {
-				this.drone.body.applyForceY(p_speed * delta / 10 + d_speed_y*2 - this.drone.body.velocity.y * 0.001)
+				this.drone.body.applyForceY(p_speed * delta / 10 + d_speed_y * 2 - this.drone.body.velocity.y * 0.001)
 				this.drone.body.setAngularVelocityY(d_ang.y / delta);
 				this.drone.body.setAngularVelocityX((cos_rot_y * d_ang.x + sin_rot_y * d_ang.z) / delta);
 				this.drone.body.setAngularVelocityZ((cos_rot_y * d_ang.z - sin_rot_y * d_ang.x) / delta);
@@ -1200,10 +1262,10 @@ class MainScene extends Scene3D {
 			this.p_speed_y.z = this.ang_speed.y * 0.25;
 			this.p_speed_y.w = -this.ang_speed.y * 0.25;
 
-			this.droneElements.propellerFR.rotation.y -= (p_speed + d_speed_y*2 + this.p_speed_p.x + this.p_speed_r.x + this.p_speed_y.x) * delta;
-			this.droneElements.propellerFL.rotation.y -= (p_speed + d_speed_y*2 + this.p_speed_p.y + this.p_speed_r.y + this.p_speed_y.y) * delta;
-			this.droneElements.propellerBR.rotation.y -= (p_speed + d_speed_y*2 + this.p_speed_p.z + this.p_speed_r.z + this.p_speed_y.z) * delta;
-			this.droneElements.propellerBL.rotation.y -= (p_speed + d_speed_y*2 + this.p_speed_p.w + this.p_speed_r.w + this.p_speed_y.w) * delta;
+			this.droneElements.propellerFR.rotation.y -= (p_speed + d_speed_y * 2 + this.p_speed_p.x + this.p_speed_r.x + this.p_speed_y.x) * delta;
+			this.droneElements.propellerFL.rotation.y -= (p_speed + d_speed_y * 2 + this.p_speed_p.y + this.p_speed_r.y + this.p_speed_y.y) * delta;
+			this.droneElements.propellerBR.rotation.y -= (p_speed + d_speed_y * 2 + this.p_speed_p.z + this.p_speed_r.z + this.p_speed_y.z) * delta;
+			this.droneElements.propellerBL.rotation.y -= (p_speed + d_speed_y * 2 + this.p_speed_p.w + this.p_speed_r.w + this.p_speed_y.w) * delta;
 
 			this.tooFast = new Vector3(this.drone.body.velocity.x, this.drone.body.velocity.y, this.drone.body.velocity.z).length() > 9
 			this.drone.body.needUpdate = true;
@@ -1225,18 +1287,42 @@ class MainScene extends Scene3D {
 				positionAttribute.needsUpdate = true;
 
 				// Lightening Animation
+				if (this.flash.visible == false) {
+					let tColors = { bottomColor: [this.sky.material.uniforms.bottomColor.value.r, this.sky.material.uniforms.bottomColor.value.g, this.sky.material.uniforms.bottomColor.value.b], topColor: [this.sky.material.uniforms.topColor.value.r, this.sky.material.uniforms.topColor.value.g, this.sky.material.uniforms.topColor.value.b] }
+					new TWEEN.Tween({ int: this.intensity, hemInt: this.hemIntensity, colors: tColors }).to({ int: 0.3, hemInt: 0, colors: this.rainColors[dayTime] }, 3000).start().onUpdate((obj) => {
+						this.lightsController.directionalLight.intensity = obj.int
+						this.lightsController.ambientLight.intensity = obj.int
+						this.lightsController.hemisphereLight.intensity = obj.hemInt
+
+						this.sky.material.uniforms.bottomColor.value.setRGB(...obj.colors.bottomColor)
+						this.sky.material.uniforms.topColor.value.setRGB(...obj.colors.topColor)
+						this.sky.material.uniforms.uniformsNeedUpdate = true;
+					})
+				}
 				this.flash.visible = true
-				if(Math.random() > 0.96 || this.flash.power > 100) {
-					if(this.flash.power<100) {
-					this.flash.position.set(
-						Math.random()*400,
-						300+Math.random()*200,
-						100
-					);
+				if (Math.random() > 0.96 || this.flash.power > 100) {
+					if (this.flash.power < 100) {
+						this.flash.position.set(
+							Math.random() * 400,
+							300 + Math.random() * 200,
+							100
+						);
 					}
 					this.flash.power = 50 + Math.random() * 500;
 				}
-			} else{
+			} else {
+				if (this.flash.visible == true) {
+					let tColors = { bottomColor: [this.sky.material.uniforms.bottomColor.value.r, this.sky.material.uniforms.bottomColor.value.g, this.sky.material.uniforms.bottomColor.value.b], topColor: [this.sky.material.uniforms.topColor.value.r, this.sky.material.uniforms.topColor.value.g, this.sky.material.uniforms.topColor.value.b] }
+					new TWEEN.Tween({ int: this.intensity, hemInt: this.hemIntensity, colors: tColors }).to({ int: 0.65, hemInt: 0.2, colors: this.dayTimeColors[dayTime] }, 3000).start().onUpdate((obj) => {
+						this.lightsController.directionalLight.intensity = obj.int
+						this.lightsController.ambientLight.intensity = obj.int
+						this.lightsController.hemisphereLight.intensity = obj.hemInt
+
+						this.sky.material.uniforms.bottomColor.value.setRGB(...obj.colors.bottomColor)
+						this.sky.material.uniforms.topColor.value.setRGB(...obj.colors.topColor)
+						this.sky.material.uniforms.uniformsNeedUpdate = true;
+					})
+				}
 				this.flash.visible = false
 			}
 
@@ -1250,7 +1336,7 @@ class MainScene extends Scene3D {
 			} else if (difficulty == 3) {
 				difficultyString = "<span style='color: black'>choosing...</span>";
 			}
-			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Play Time: " + Math.round(time) + "s <br>" + "Lives: <span style='color: red'>" + "♥".repeat(this.lives) + "</span><br>Difficulty: " + difficultyString + "<br>🏅 " + this.collected_coins + " / "+targetCoins[difficulty];
+			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Play Time: " + Math.round(time) + "s <br>" + "Lives: <span style='color: red'>" + "♥".repeat(this.lives) + "</span><br>Difficulty: " + difficultyString + "<br>🏅 " + this.collected_coins + " / " + targetCoins[difficulty];
 
 			// this.csm.update(this.camera.matrix);
 		}
