@@ -139,6 +139,7 @@ var difficulty = 3; //easy 0, medium 1, hard 2
 var dayTime = 0; // 0 day, 1 twilight, 2 night
 const targetCoins = [3, 5, 10, 0];
 var quadricopter = false; // false if normal drone, true if quadricopter
+var timestart = 0;
 
 function colorToHex(color) {
 	if (color == "red") {
@@ -1277,6 +1278,8 @@ class MainScene extends Scene3D {
 				this.gauge.set(this.fuel);
 				this.fuel -= (5 + difficulty * difficulty * 3) * delta;
 				if (this.fuel <= 0) this.collisionDrone()
+
+				timestart += delta;
 			}
 
 			this.thirdPersonCamera.Update(delta, this.theta, this.phi);
@@ -1399,7 +1402,7 @@ class MainScene extends Scene3D {
 			} else if (difficulty == 3) {
 				difficultyString = "<span style='color: black'>choosing...</span>";
 			}
-			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Play Time: " + Math.round(time) + "s <br>" + "Lives: <span style='color: red'>" + "♥".repeat(this.lives) + "</span><br>Difficulty: " + difficultyString + "<br>🏅 " + this.collected_coins + " / " + targetCoins[difficulty];
+			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Play Time: " + Math.round(timestart) + "s <br>" + "Lives: <span style='color: red'>" + "♥".repeat(this.lives) + "</span><br>Difficulty: " + difficultyString + "<br>🏅 " + this.collected_coins + " / " + targetCoins[difficulty];
 
 			// this.csm.update(this.camera.matrix);
 		}
