@@ -82,15 +82,13 @@ class ThirdPersonCamera {
 	_CalculateOffset(theta, phi) {
 		const radius = this._params.radius;
 		const offset = new THREE.Vector3(Math.sin(theta) * Math.cos(phi) * radius, Math.sin(phi) * radius, Math.cos(phi) * Math.cos(theta) * radius);
-		offset.applyEuler(this._params.target.rotation);
-		offset.add(this._params.target.position);
+		offset.add(this._params.target);
 		return offset;
 	}
 
 	_CalculateLookAt() {
 		const lookAt = new THREE.Vector3(0, 0, 0);
-		lookAt.applyEuler(this._params.target.rotation);
-		lookAt.add(this._params.target.position);
+		lookAt.add(this._params.target);
 		return lookAt;
 	}
 	SetTarget(target) {
@@ -259,11 +257,14 @@ class MainScene extends Scene3D {
 	init() {
 		context = this;
 		this.renderer.setPixelRatio(Math.max(1, window.devicePixelRatio / 2))
+		this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 		this.imageLoader = new TextureLoader();
 
 		// camera
 		{
 			this.camera = new THREE.PerspectiveCamera(60, this.camera.aspect, 0.1, 1000);
+			this.camera.position.set(-109.12401580810547, 213.40965270996094, -266.63372802734375);
+			this.camera.lookAt(0,0,0)
 
 
 
@@ -382,7 +383,7 @@ class MainScene extends Scene3D {
 
 		const drone2 = this.load.preload('drone2', './models/rc_quadcopter/scene4.gltf')
 
-		const bitcoin = this.load.preload('bitcoin', './models/bitcoin/scene.gltf')
+		const bitcoin = this.load.preload('bitcoin', './models/bitcoin/scene2.gltf')
 
 		const tank = this.load.preload('tank', './models/tank/scene.gltf')
 
@@ -524,6 +525,13 @@ class MainScene extends Scene3D {
 		directionalLight.color.setRGB(...this.lightColors[dayTime].dir)
 		ambientLight.color.setRGB(...this.lightColors[dayTime].amb)
 		hemisphereLight.color.setRGB(...this.lightColors[dayTime].hem)
+		directionalLight.shadow.camera.top = 50
+		directionalLight.shadow.camera.bottom = -50
+		directionalLight.shadow.camera.left = -50
+		directionalLight.shadow.camera.right = 50
+		directionalLight.shadow.mapSize.set(2048,2048)
+		directionalLight.position.x+=35
+		directionalLight.position.y+=1
 
 		// rainlight
 		// this.flash = new THREE.PointLight(0x062d89, 30, 750, 1.7);
@@ -757,7 +765,7 @@ class MainScene extends Scene3D {
 
 			this.drone.body.setCcdMotionThreshold(1e-7)
 			this.drone.body.setCcdSweptSphereRadius(0.25)
-			this.thirdPersonCamera.SetTarget(this.drone);
+			this.thirdPersonCamera.SetTarget(this.drone.position);
 
 
 			
@@ -841,12 +849,14 @@ class MainScene extends Scene3D {
 				}
 			});
 
-			const spotLight = new THREE.SpotLight(0xff0000);
+			const spotLight = new THREE.SpotLight(0xeeeea0);
 
-			spotLight.angle = Math.PI / 4;
+			spotLight.angle = Math.PI/4;
 			spotLight.penumbra = 0.1;
 			spotLight.decay = 2;
 			spotLight.distance = 50;
+			spotLight.position.set(0,0,1)
+			spotLight.target.position.set(0,0,10)
 
 			spotLight.castShadow = true;
 			spotLight.shadow.mapSize.width = 512;
@@ -854,8 +864,11 @@ class MainScene extends Scene3D {
 			spotLight.shadow.camera.near = 10;
 			spotLight.shadow.camera.far = 50;
 			spotLight.shadow.focus = 1;
-
+			spotLight.intensity = 0
+			if (dayTime == 2) spotLight.intensity = 1
+			this.lightsController.spotLight = spotLight;
 			this.drone.add(spotLight);
+			this.drone.add(spotLight.target);
 		}
 		const addWater = async () => {
 
@@ -1100,6 +1113,7 @@ class MainScene extends Scene3D {
 				addBitCoin();
 				addTank();
 				addHearts();
+				this.lightsController.directionalLight.target = this.drone;
 			});
 
 			context.started = true;
@@ -1351,7 +1365,7 @@ class MainScene extends Scene3D {
 				// Lightening Animation
 				if (this.flash.visible == false) {
 					let tColors = { bottomColor: [this.sky.material.uniforms.bottomColor.value.r, this.sky.material.uniforms.bottomColor.value.g, this.sky.material.uniforms.bottomColor.value.b], topColor: [this.sky.material.uniforms.topColor.value.r, this.sky.material.uniforms.topColor.value.g, this.sky.material.uniforms.topColor.value.b] }
-					new TWEEN.Tween({ int: this.intensity, hemInt: this.hemIntensity, colors: tColors }).to({ int: 0.3, hemInt: 0, colors: this.rainColors[dayTime] }, 3000).start().onUpdate((obj) => {
+					new TWEEN.Tween({ int: this.intensity, hemInt: this.hemIntensity, colors: tColors, spotInt: 0 }).to({ int: 0.3, hemInt: 0, colors: this.rainColors[dayTime], spotInt: 1 }, 3000).start().onUpdate((obj) => {
 						this.lightsController.directionalLight.intensity = obj.int
 						this.lightsController.ambientLight.intensity = obj.int
 						this.lightsController.hemisphereLight.intensity = obj.hemInt
@@ -1359,6 +1373,7 @@ class MainScene extends Scene3D {
 						this.sky.material.uniforms.bottomColor.value.setRGB(...obj.colors.bottomColor)
 						this.sky.material.uniforms.topColor.value.setRGB(...obj.colors.topColor)
 						this.sky.material.uniforms.uniformsNeedUpdate = true;
+						if (dayTime != 2) this.lightsController.spotLight.intensity = obj.spotInt;
 					})
 				}
 				this.flash.visible = true
@@ -1375,7 +1390,7 @@ class MainScene extends Scene3D {
 			} else {
 				if (this.flash.visible == true) {
 					let tColors = { bottomColor: [this.sky.material.uniforms.bottomColor.value.r, this.sky.material.uniforms.bottomColor.value.g, this.sky.material.uniforms.bottomColor.value.b], topColor: [this.sky.material.uniforms.topColor.value.r, this.sky.material.uniforms.topColor.value.g, this.sky.material.uniforms.topColor.value.b] }
-					new TWEEN.Tween({ int: this.intensity, hemInt: this.hemIntensity, colors: tColors }).to({ int: 0.65, hemInt: 0.2, colors: this.dayTimeColors[dayTime] }, 3000).start().onUpdate((obj) => {
+					new TWEEN.Tween({ int: this.intensity, hemInt: this.hemIntensity, colors: tColors, spotInt: 1 }).to({ int: 0.65, hemInt: 0.2, colors: this.dayTimeColors[dayTime], spotInt: 0}, 3000).start().onUpdate((obj) => {
 						this.lightsController.directionalLight.intensity = obj.int
 						this.lightsController.ambientLight.intensity = obj.int
 						this.lightsController.hemisphereLight.intensity = obj.hemInt
@@ -1383,11 +1398,14 @@ class MainScene extends Scene3D {
 						this.sky.material.uniforms.bottomColor.value.setRGB(...obj.colors.bottomColor)
 						this.sky.material.uniforms.topColor.value.setRGB(...obj.colors.topColor)
 						this.sky.material.uniforms.uniformsNeedUpdate = true;
+						if (dayTime != 2) this.lightsController.spotLight.intensity = obj.spotInt;
 					})
 				}
 				this.flash.visible = false
 			}
-
+			if (dayTime == 1) this.lightsController.directionalLight.position.set(this.drone.position.x+200, this.drone.position.y+100, this.drone.position.z+50)
+			else if (dayTime == 0) this.lightsController.directionalLight.position.set(this.drone.position.x+100, this.drone.position.y+200, this.drone.position.z+100)
+			else  this.lightsController.directionalLight.position.set(this.drone.position.x-100, this.drone.position.y+200, this.drone.position.z+100)
 			TWEEN.update();
 
 			let difficultyString = "<span style='color: green'>Easy</span>";
