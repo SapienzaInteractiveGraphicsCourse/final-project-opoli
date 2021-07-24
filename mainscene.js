@@ -440,6 +440,13 @@ class MainScene extends Scene3D {
 		directionalLight.intensity = intensity
 		this.directional = directionalLight
 
+		// rainlight
+		this.flash = new THREE.PointLight(0x062d89, 30, 750, 1.7);
+		this.flash.position.set(800, 800, 800);
+		this.scene.add(this.flash);
+
+		
+
 		// ground
 		this.ground = new ExtendedObject3D()
 		this.ground.add(new Mesh(new PlaneGeometry(1000, 1000), new MeshPhongMaterial({ color: 0xff0000 })));
@@ -553,8 +560,7 @@ class MainScene extends Scene3D {
 			})
 		}
 		const addDrone = async () => {
-
-			
+						
 			var sphereGeom = new THREE.SphereGeometry(1, 1, 1);
     
             var moonMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
@@ -1076,7 +1082,7 @@ class MainScene extends Scene3D {
 			document.getElementById("rainbutton").src = './menu/sun.png';
 		}
 
-		setTimeout(function () { context.shiftRain(!isRaining) }, Math.random() * (20000 - 5000) + 5000)
+		setTimeout(function () { context.shiftRain(!isRaining) }, Math.random() * (30000 - 15000) + 15000)
 	}
 
 	p_speed_p = new THREE.Vector4(0, 0, 0, 0);
@@ -1153,6 +1159,8 @@ class MainScene extends Scene3D {
 				this.fuel -= (5 + difficulty * difficulty * 3) * delta;
 				if (this.fuel <= 0) this.collisionDrone()
 			}
+			
+			
 
 			this.thirdPersonCamera.Update(delta, this.theta, this.phi);
 
@@ -1215,6 +1223,21 @@ class MainScene extends Scene3D {
 					positionAttribute.setXYZ(i, vertex.x, vertex.y, vertex.z);
 				}
 				positionAttribute.needsUpdate = true;
+
+				// Lightening Animation
+				this.flash.visible = true
+				if(Math.random() > 0.96 || this.flash.power > 100) {
+					if(this.flash.power<100) {
+					this.flash.position.set(
+						Math.random()*400,
+						300+Math.random()*200,
+						100
+					);
+					}
+					this.flash.power = 50 + Math.random() * 500;
+				}
+			} else{
+				this.flash.visible = false
 			}
 
 			TWEEN.update();
