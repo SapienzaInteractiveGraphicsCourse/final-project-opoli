@@ -22,9 +22,6 @@ import { ShaderPass } from './three.js-master/examples/jsm/postprocessing/Shader
 import { OutlinePass } from './three.js-master/examples/jsm/postprocessing/OutlinePass.js';
 import { FXAAShader } from './three.js-master/examples/jsm/shaders/FXAAShader.js';
 
-// /**
-//  * Is touch device?
-//  */
 
 // controls
 const inputs = {
