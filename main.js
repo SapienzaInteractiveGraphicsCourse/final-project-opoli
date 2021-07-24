@@ -1142,14 +1142,14 @@ class MainScene extends Scene3D {
 				type: 'error',
 				layout: 'center',
 				theme: 'nest',
-				text: 'You died. Retry in 5 seconds...',
-				timeout: '5000',
+				text: 'You died. Retry in 10 seconds...',
+				timeout: '10000',
 				progressBar: true,
 				closeWith: ['click'],
 				killer: true,
 			}).show();
 			playDeathMusic();
-			setTimeout(() => { location.reload() }, 5000)
+			setTimeout(() => { location.reload() }, 10000)
 		}
 
 	}
