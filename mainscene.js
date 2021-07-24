@@ -16,6 +16,12 @@ import { Water } from './three.js-master/examples/js/objects/Water.js';
 import { CSM } from './three.js-master/examples/jsm/csm/CSM.js'
 import { CSMHelper } from './three.js-master/examples/jsm/csm/CSMHelper.js'
 
+import { EffectComposer } from './three.js-master/examples/jsm/postprocessing/EffectComposer.js';
+			import { RenderPass } from './three.js-master/examples/jsm/postprocessing/RenderPass.js';
+			import { ShaderPass } from './three.js-master/examples/jsm/postprocessing/ShaderPass.js';
+			import { OutlinePass } from './three.js-master/examples/jsm/postprocessing/OutlinePass.js';
+			import { FXAAShader } from './three.js-master/examples/jsm/shaders/FXAAShader.js';
+
 // /**
 //  * Is touch device?
 //  */
@@ -327,6 +333,26 @@ class MainScene extends Scene3D {
 			this.add.existing(rain);
 			this.rain = rain;
 		}
+
+		// postprocessing
+
+		this.composer = new EffectComposer( this.renderer );
+
+		const renderPass = new RenderPass( this.scene, this.camera );
+		this.composer.addPass( renderPass );
+
+		this.outlinePass = new OutlinePass( new THREE.Vector2( window.innerWidth, window.innerHeight ), this.scene, this.camera );
+		this.outlinePass.edgeStrength = 4.0;
+		this.outlinePass.edgeGlow = 1.0;
+		this.outlinePass.edgeThickness = 4.0;
+		this.outlinePass.pulsePeriod = 0;
+		this.outlinePass.visibleEdgeColor.set( '#196e41' );
+		this.outlinePass.hiddenEdgeColor.set( '#196e41' );
+		this.composer.addPass( this.outlinePass );
+
+		let effectFXAA = new ShaderPass( FXAAShader );
+		effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+		this.composer.addPass( effectFXAA );
 	}
 
 	async preload() {
@@ -476,6 +502,9 @@ class MainScene extends Scene3D {
 
 					} else if (child.name.includes("Pink") || child.name.includes("Magenta")) {
 						// console.log(child.name)
+						this.outlinePass.selectedObjects.push(child)
+						console.log(this.outlinePass.selectedObjects)
+						
 					} else if (child.name.includes("Cyan")) {
 						/*
 						var water = new Water(child.geometry, {
@@ -524,6 +553,16 @@ class MainScene extends Scene3D {
 			})
 		}
 		const addDrone = async () => {
+
+			
+			var sphereGeom = new THREE.SphereGeometry(1, 1, 1);
+    
+            var moonMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
+            var moon = new THREE.Mesh(sphereGeom, moonMaterial);
+            moon.position.set(35,1,0);
+            this.scene.add(moon);
+			this.outlinePass.selectedObjects = [moon]
+			
 			const object = await this.load.gltf('drone')
 			const drone = object.scene.children[0]
 
@@ -531,6 +570,7 @@ class MainScene extends Scene3D {
 			this.drone.name = 'drone'
 			this.drone.add(drone)
 			this.drone.position.set(35, 1, 0)
+			this.outlinePass.selectedObjects.push(this.drone)
 			// add shadow
 			this.drone.traverse(child => {
 				if (child.isMesh) {
