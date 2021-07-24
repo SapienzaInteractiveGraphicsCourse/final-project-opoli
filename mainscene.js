@@ -125,7 +125,7 @@ var listener, sound, droneSound, helperSound, rainSound, rainMustPlay = false;
 var soundsLoaded = false;
 const sounds = {
 	background: { url: './sounds/music.mp3' },
-	drone: { url: './sounds/drone.mp3' },
+	drone: { url: './sounds/drone.m4a' },
 	death: { url: './sounds/death.wav' },
 	win: { url: './sounds/win.wav' },
 	consumable: { url: './sounds/consumable.wav' },
@@ -185,7 +185,7 @@ function playSoundTrack() {
 		droneSound.isPlaying = false;
 		droneSound.setBuffer(sounds.drone.sound);
 		droneSound.setLoop(true);
-		droneSound.setVolume(0.025);
+		droneSound.setVolume(0.2);
 		droneSound.play();
 		playRainMusic();
 	}
@@ -713,6 +713,7 @@ class MainScene extends Scene3D {
 					} else if (otherObj.name.includes("tank")) {
 						this.tanks--;
 						this.fuel += 1000;
+						if (this.fuel > 3000) this.fuel = 3000;
 					}
 
 				} else if (this.tooFast) {
