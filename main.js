@@ -1262,6 +1262,7 @@ class MainScene extends Scene3D {
 				}).show();
 				this.gameStarted = true;
 				document.getElementById('startbutton').disabled = false;
+				document.getElementById('startbutton').innerHTML = "Start";
 			}
 		}
 		if (this.drone && this.drone.body && this.thirdPersonCamera) {
