@@ -119,7 +119,7 @@ var ease_func_speed = TWEEN.Easing.Quartic.Out;
 var ease_func_up = TWEEN.Easing.Linear.None;
 var throttle_control = false;
 
-var listener, sound, droneSound, helperSound, rainSound, rainMustPlay = false;
+var listener, sound, droneSound, helperSound, rainSound, rainMustPlay = false, droneFirstLift = false;
 var soundsLoaded = false;
 const sounds = {
 	background: { url: './sounds/music.mp3' },
@@ -137,6 +137,7 @@ var difficulty = 3; //easy 0, medium 1, hard 2
 var dayTime = 0; // 0 day, 1 twilight, 2 night
 const targetCoins = [3, 5, 10, 0];
 var quadricopter = false; // false if normal drone, true if quadricopter
+var timestart = 0;
 
 function colorToHex(color) {
 	if (color == "red") {
@@ -172,7 +173,7 @@ function playSoundTrack() {
 	if (sound.isPlaying) {
 		document.getElementById("musicbutton").src = './menu/soundoff.png';
 		sound.pause();
-		droneSound.pause();
+		if(droneFirstLift) droneSound.pause();
 		if(rainSound.isPlaying) rainSound.stop();
 	} else {
 		document.getElementById("musicbutton").src = './menu/soundin.png';
@@ -181,11 +182,13 @@ function playSoundTrack() {
 		sound.setLoop(true);
 		sound.setVolume(0.15);
 		sound.play();
-		droneSound.isPlaying = false;
-		droneSound.setBuffer(sounds.drone.sound);
-		droneSound.setLoop(true);
-		droneSound.setVolume(0.2);
-		droneSound.play();
+		if(droneFirstLift) {
+			droneSound.isPlaying = false;
+			droneSound.setBuffer(sounds.drone.sound);
+			droneSound.setLoop(true);
+			droneSound.setVolume(0.2);
+			droneSound.play();
+		}
 		playRainMusic();
 	}
 }
@@ -407,6 +410,11 @@ class MainScene extends Scene3D {
 	max_speed_y = 15;
 
 	applyTweens(key) {
+		if(!droneFirstLift) {
+			droneFirstLift = true
+			playSoundTrack()
+			playSoundTrack()
+		}
 		inputs[key] = true;
 		if (inputs.w) tweens.w = [
 			new TWEEN.Tween(this.speed).to({ z: 10 }, transition_s).start().easing(ease_func_speed),
@@ -445,7 +453,6 @@ class MainScene extends Scene3D {
 	droneElements = {};
 
 
-	started = false;
 	async create() {
 		const { lights } = await this.warpSpeed('-ground', '-orbitControls')
 
@@ -1066,7 +1073,6 @@ class MainScene extends Scene3D {
 
 		// event listeners
 		document.getElementById("startbutton").addEventListener("click", () => {
-			this.gameStart = true;
 			this.shiftRain(false);
 			playSoundTrack();
 			document.getElementById("gameloader").style.display = 'none';
@@ -1114,9 +1120,9 @@ class MainScene extends Scene3D {
 				addTank();
 				addHearts();
 				this.lightsController.directionalLight.target = this.drone;
+				context.gameStart = true
 			});
 
-			context.started = true;
 			controls.lock();
 			document.getElementById("joystickbutton").addEventListener("click", () => {
 				document.getElementById("commands").style.display = 'none';
@@ -1276,6 +1282,7 @@ class MainScene extends Scene3D {
 				}).show();
 				this.gameStarted = true;
 				document.getElementById('startbutton').disabled = false;
+				document.getElementById('startbutton').innerHTML = "Start";
 			}
 		}
 		if (this.drone && this.drone.body && this.thirdPersonCamera) {
@@ -1290,6 +1297,8 @@ class MainScene extends Scene3D {
 				this.gauge.set(this.fuel);
 				this.fuel -= (5 + difficulty * difficulty * 3) * delta;
 				if (this.fuel <= 0) this.collisionDrone()
+
+				timestart += delta;
 			}
 
 			this.thirdPersonCamera.Update(delta, this.theta, this.phi);
@@ -1416,7 +1425,7 @@ class MainScene extends Scene3D {
 			} else if (difficulty == 3) {
 				difficultyString = "<span style='color: black'>choosing...</span>";
 			}
-			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Play Time: " + Math.round(time) + "s <br>" + "Lives: <span style='color: red'>" + "♥".repeat(this.lives) + "</span><br>Difficulty: " + difficultyString + "<br>🏅 " + this.collected_coins + " / " + targetCoins[difficulty];
+			document.getElementById("fps").innerHTML = "FPS: " + Math.round(1 / delta) + "<br> Play Time: " + Math.round(timestart) + "s <br>" + "Lives: <span style='color: red'>" + "♥".repeat(this.lives) + "</span><br>Difficulty: " + difficultyString + "<br>🏅 " + this.collected_coins + " / " + targetCoins[difficulty];
 
 			// this.csm.update(this.camera.matrix);
 		}
