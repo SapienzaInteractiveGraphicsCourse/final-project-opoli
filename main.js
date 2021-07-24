@@ -336,12 +336,10 @@ class MainScene extends Scene3D {
 			const points = [];
 			for (let i = 0; i < rainCount; i++) {
 				let rainDrop = new THREE.Vector3(
-					Math.random() * 400 - 200,
-					Math.random() * 500 - 250,
-					Math.random() * 400 - 200
+					Math.random() * 1000 - 500,
+					Math.random() * 400+250,
+					Math.random() * 1000 - 500
 				);
-				rainDrop.velocity = {};
-				rainDrop.velocity = 0;
 				points.push(rainDrop);
 			}
 			rainGeo = new THREE.BufferGeometry().setFromPoints(points);
@@ -1158,9 +1156,9 @@ class MainScene extends Scene3D {
 
 	shiftRain(isRaining) {
 		if (isRaining) {
-			this.rain.material.opacity = 1
+			this.rain.visible = true
 		} else {
-			this.rain.material.opacity = 0
+			this.rain.visible = false
 		}
 		this.isRaining = isRaining;
 		rainMustPlay = isRaining;
@@ -1332,8 +1330,8 @@ class MainScene extends Scene3D {
 				for (var i = 0; i < positionAttribute.count; i++) {
 					vertex.fromBufferAttribute(positionAttribute, i);
 					vertex.y -= 1;
-					if (vertex.y < - 200) {
-						vertex.y = 200;
+					if (vertex.y < 0) {
+						vertex.y = Math.random() * 400+250;
 					}
 					positionAttribute.setXYZ(i, vertex.x, vertex.y, vertex.z);
 				}
