@@ -54,7 +54,7 @@ canvas {
     display: block;
     width: 70vw;
     border: 1px solid #000;
-    height: 70vh;
+    height: 75vh;
     
 }
 
@@ -93,5 +93,13 @@ canvas {
 }
 
 .selected4 {
+    background-color: yellowgreen
+}
+
+.selectable5:hover {
+    background-color: yellowgreen
+}
+
+.selected5 {
     background-color: yellowgreen
 }

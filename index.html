@@ -14,11 +14,13 @@
 		
 		if(n < 12) {
 			advisedhour = "Day"
+			document.getElementById("advisedhour").innerHTML = advisedhour
 		}
 		else if (n < 19) {
 			advisedhour = "Afternoon"
+			document.getElementById("advisedhour").innerHTML = advisedhour
 		} 
-		document.getElementById("advisedhour").innerHTML = advisedhour
+		
 
 		var elements = document.getElementsByClassName("selectable");
 
@@ -52,6 +54,13 @@
 				}
 				this.classList.add("selected4");
 			}
+			if(this.getAttribute("data-quadricopter")) {
+				document.getElementById("startbutton").setAttribute("data-quadricopter", this.getAttribute("data-quadricopter"))
+				for (var i = 0; i < elements.length; i++) {
+					elements[i].classList.remove("selected5");
+				}
+				this.classList.add("selected5");
+			}
 			
 			
 		};
@@ -63,17 +72,20 @@
 	
 </script>
 <body>
-	<div id ="gameloader" class="centerer" style="padding: 100px; display: inline-block; text-align: center;">
-		<div  class="centerer" ><br><img src="./menu/logo.png">
+	<div id ="gameloader" class="centerer" style="display: inline-block; text-align: center;">
+		<div class="centeerer" ><br><img src="./menu/logo.png">
 		<br>
-		<h2>Select Drone Color</h2>
+		<div style="float: left; margin-left: 3vw">
+			<h2>Select Drone Color</h2>
 		<div data-drone-color="black" class="selectable selectable1 selected1" style="float: left; margin: 2vh; background-color: black; color: #fff; width: 3vh; height: 3vh; border: 1px solid #000;  font-size: 2.5vh"  ></div>
 		<div data-drone-color="red" class="selectable selectable1" style="float: left; margin: 2vh; background-color: red; width: 3vh; height: 3vh; border: 1px solid #000; font-size: 2.5vh" ></div>
 		<div data-drone-color="blue" class="selectable selectable1" style="float: left; margin: 2vh; background-color: blue; width: 3vh; height: 3vh; border: 1px solid #000;  font-size: 2.5vh"  ></div>
 		<div data-drone-color="green" class="selectable selectable1" style="float: left; margin: 2vh; background-color: green; width: 3vh; height: 3vh; border: 1px solid #000;  font-size: 2.5vh"  ></div>
 		<div data-drone-color="white" class="selectable selectable1" style="float: left; margin: 2vh; background-color: white; width: 3vh; height: 3vh; border: 1px solid #000;  font-size: 2.5vh"  ></div>
 		<div style="clear: both"></div>
+		</div>
 
+		<div style="float: right; margin-right: 3vw">
 		<h2>Select Propeller Color</h2>
 		<div  data-propeller-color="black" class="selectable selectable2 selected2" style="float: left; margin: 2vh; background-color: black; color: #fff; width: 3vh; height: 3vh; border: 1px solid #000;  font-size: 2.5vh" ></div>
 		<div data-propeller-color="red" class="selectable selectable2" style="float: left; margin: 2vh; background-color: red; width: 3vh; height: 3vh; border: 1px solid #000;  font-size: 2.5vh" ></div>
@@ -81,21 +93,41 @@
 		<div  data-propeller-color="green" class="selectable selectable2" style="float: left; margin: 2vh; background-color: green; width: 3vh; height: 3vh; border: 1px solid #000;  font-size: 2.5vh" ></div>
 		<div data-propeller-color="white" class="selectable selectable2" style="float: left; margin: 2vh; background-color: white; width: 3vh; height: 3vh; border: 1px solid #000;  font-size: 2.5vh" ></div>
 		<div style="clear: both"></div>
+		</div>
+		<div style="clear: both"></div>
 
+		<div style="float: left; margin-left: 3vw">
 		<h2>Choose Difficulty</h2>
 		<div data-difficulty="easy" class="selectable selectable3" style="float: left; padding: 2vh; margin: 2vh;  border: 1px solid green" >Easy</div>
 		<div  data-difficulty="medium" class="selectable selectable3 selected3" style="float: left; padding: 2vh; margin: 2vh; border: 1px solid orange" >Medium</div>
 		<div  data-difficulty="hard" class="selectable selectable3" style="float: left; padding:2vh; margin: 2vh; border: 1px solid red" >Hard</div>
 		<div style="clear: both"></div>
+		</div>
 
-		<h2>Choose DayTime<br><small>(currently your computer time is: <span id="advisedhour">Night</span>)</small> </h2>
-		<div data-day="day" class="selectable selectable4 selected4" style="float: left; padding: 2vh; margin: 2vh;  border: 1px solid skyblue" >Day</div>
-		<div  data-day="afternoon" class="selectable selectable4" style="float: left; padding: 2vh; margin: 2vh; border: 1px solid orange" >Afternoon</div>
-		<div  data-day="night" class="selectable selectable4" style="float: left; padding:2vh; margin: 2vh; border: 1px solid black" >Night</div>
+		<div style="float: right; margin-right: 3vw">
+			<h2>Choose DayTime<br><small>(currently your computer time is: <span id="advisedhour">Night</span>)</small> </h2>
+			<div data-day="day" class="selectable selectable4 selected4" style="float: left; padding: 2vh; margin: 2vh;  border: 1px solid skyblue" >Day</div>
+			<div  data-day="afternoon" class="selectable selectable4" style="float: left; padding: 2vh; margin: 2vh; border: 1px solid orange" >Afternoon</div>
+			<div  data-day="night" class="selectable selectable4" style="float: left; padding:2vh; margin: 2vh; border: 1px solid black" >Night</div>
+			<div style="clear: both"></div>
+		</div>
 		<div style="clear: both"></div>
 
+		<div style="margin: auto;
+		width: 50%;">
+		<h2>Choose Drone Type</h2>
+		
+		<div data-quadricopter="false" class="selectable selectable5 selected5" style="float: left; margin-left: 10px">
+				<img src="./menu/drone 1.png" style="height: 150px; padding: 10px">
+		</div>
+			<div data-quadricopter="true"  class="selectable selectable5" style="float: right;  margin-right: 10px">
+				<img src="./menu/drone 2.png" style="height: 150px; padding: 10px">
+		</div>
+		<div style="clear: both"></div>
+		</div>
+
 		<br>
-		<button data-day="day" data-drone-color="black" data-propeller-color="black" data-difficulty="medium" style="width: 6vw; height: 5vh; font-size: 2vw" id="startbutton" disabled>Start</button>
+		<button data-quadricopter="false" data-day="day" data-drone-color="black" data-propeller-color="black" data-difficulty="medium" style="width: 6vw; height: 5vh; font-size: 2vw" id="startbutton" disabled>Start</button>
 		</div>
 	</div>
 	<div id="menu">

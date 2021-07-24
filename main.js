@@ -138,6 +138,7 @@ var chosenColors = [3, 4]; //1st drone, 2nd propellers
 var difficulty = 3; //easy 0, medium 1, hard 2
 var dayTime = 0; // 0 day, 1 twilight, 2 night
 const targetCoins = [3, 5, 10, 0];
+var quadricopter = false; // false if normal drone, true if quadricopter
 
 function colorToHex(color) {
 	if (color == "red") {
@@ -379,13 +380,15 @@ class MainScene extends Scene3D {
 
 		const drone = this.load.preload('drone', './models/drone.glb')
 
+		const drone2 = this.load.preload('drone2', './models/rc_quadcopter/scene4.gltf')
+
 		const bitcoin = this.load.preload('bitcoin', './models/bitcoin/scene.gltf')
 
 		const tank = this.load.preload('tank', './models/tank/scene.gltf')
 
 		const heart = this.load.preload('heart', './models/heart/scene.gltf')
 
-		await Promise.all([city, drone, bitcoin, tank, heart])
+		await Promise.all([city, drone, bitcoin, tank, heart, drone2])
 	}
 
 	speed = new Vector3(0, 0, 0);
@@ -544,7 +547,7 @@ class MainScene extends Scene3D {
 			mass: 0
 		})
 
-
+		
 
 		const addCity = async () => {
 			var tex_map, tex_normal_map;
@@ -639,15 +642,24 @@ class MainScene extends Scene3D {
 					}
 				}
 			})
+			this.city = city
 		}
 		const addDrone = async () => {
-			const object = await this.load.gltf('drone')
+			var object;
+			if(quadricopter) {
+				object = await this.load.gltf('drone2') 
+			}
+			else {
+				object = await this.load.gltf('drone')
+			}
+
 			const drone = object.scene.children[0]
 
 			this.drone = new ExtendedObject3D()
 			this.drone.name = 'drone'
 			this.drone.add(drone)
 			this.drone.position.set(35, 1, 0)
+			if(quadricopter) this.drone.scale.set(0.7, 0.7, 0.7);
 			// add shadow
 			this.drone.traverse(child => {
 				if (child.isMesh) {
@@ -748,49 +760,7 @@ class MainScene extends Scene3D {
 			this.thirdPersonCamera.SetTarget(this.drone);
 
 
-			// event listeners
-			document.getElementById("startbutton").addEventListener("click", () => {
-				this.gameStart = true;
-				this.shiftRain(false);
-				playSoundTrack();
-				document.getElementById("gameloader").style.display = 'none';
-				chosenColors[0] = droneColors.indexOf(document.getElementById("startbutton").getAttribute("data-drone-color"))
-				chosenColors[1] = droneColors.indexOf(document.getElementById("startbutton").getAttribute("data-propeller-color"))
-				let n_difficulty = document.getElementById("startbutton").getAttribute("data-difficulty")
-				if (n_difficulty == "easy") {
-					difficulty = 0;
-				} else if (n_difficulty == "medium") {
-					difficulty = 1;
-				} else {
-					difficulty = 2;
-				}
-				let n_day = document.getElementById("startbutton").getAttribute("data-day")
-				if (n_day == "day") {
-					dayTime = 0;
-				} else if (n_day == "afternoon") {
-					dayTime = 1;
-				} else {
-					dayTime = 2;
-				}
-
-				this.lightsController.directionalLight.color.setRGB(...this.lightColors[dayTime].dir)
-				this.lightsController.ambientLight.color.setRGB(...this.lightColors[dayTime].amb)
-				this.lightsController.hemisphereLight.color.setRGB(...this.lightColors[dayTime].hem)
-				this.sky.material.uniforms.bottomColor.value.setRGB(...this.dayTimeColors[dayTime].bottomColor)
-				this.sky.material.uniforms.topColor.value.setRGB(...this.dayTimeColors[dayTime].topColor)
-				this.sky.material.uniforms.uniformsNeedUpdate = true;
-
-				context.drone.children[0].material.color.setHex(colorToHex(droneColors[chosenColors[0]]))
-				context.droneElements.propellerFR.material.color.setHex(colorToHex(droneColors[chosenColors[1]]))
-				context.started = true;
-				controls.lock();
-				document.getElementById("joystickbutton").addEventListener("click", () => {
-					document.getElementById("commands").style.display = 'none';
-					setTimeout(() => {
-						controls.lock()
-					}, 1000);
-				}, false);
-			});
+			
 			document.addEventListener('keydown', function (event) {
 				let key = event.key.toLowerCase();
 				if (context.freefall || !context.gameStart) return;
@@ -925,6 +895,7 @@ class MainScene extends Scene3D {
 			this.add.existing(water);
 
 		}
+
 		const addBitCoin = async () => {
 			const object = await this.load.gltf('bitcoin')
 			const scene = object.scenes[0]
@@ -1080,13 +1051,70 @@ class MainScene extends Scene3D {
 			}, 20000)
 		}
 
+		// event listeners
+		document.getElementById("startbutton").addEventListener("click", () => {
+			this.gameStart = true;
+			this.shiftRain(false);
+			playSoundTrack();
+			document.getElementById("gameloader").style.display = 'none';
+			chosenColors[0] = droneColors.indexOf(document.getElementById("startbutton").getAttribute("data-drone-color"))
+			chosenColors[1] = droneColors.indexOf(document.getElementById("startbutton").getAttribute("data-propeller-color"))
+			let n_difficulty = document.getElementById("startbutton").getAttribute("data-difficulty")
+			if (n_difficulty == "easy") {
+				difficulty = 0;
+			} else if (n_difficulty == "medium") {
+				difficulty = 1;
+			} else {
+				difficulty = 2;
+			}
+			let n_day = document.getElementById("startbutton").getAttribute("data-day")
+			if (n_day == "day") {
+				dayTime = 0;
+			} else if (n_day == "afternoon") {
+				dayTime = 1;
+			} else {
+				dayTime = 2;
+			}
+
+			if(document.getElementById("startbutton").getAttribute("data-quadricopter") == "true") quadricopter = true;
+
+			this.lightsController.directionalLight.color.setRGB(...this.lightColors[dayTime].dir)
+			this.lightsController.ambientLight.color.setRGB(...this.lightColors[dayTime].amb)
+			this.lightsController.hemisphereLight.color.setRGB(...this.lightColors[dayTime].hem)
+			this.sky.material.uniforms.bottomColor.value.setRGB(...this.dayTimeColors[dayTime].bottomColor)
+			this.sky.material.uniforms.topColor.value.setRGB(...this.dayTimeColors[dayTime].topColor)
+			this.sky.material.uniforms.uniformsNeedUpdate = true;
+
+			addDrone().then( () => {
+				context.drone.traverse(child => {
+					if (child.isMesh) {
+						if (child.name != 'Mesh_5')
+							child.material.color.setHex(colorToHex(droneColors[chosenColors[0]]))
+					}
+				})
+				context.droneElements.propellerFR.material.color.setHex(colorToHex(droneColors[chosenColors[1]]))
+				context.droneElements.propellerFL.material.color.setHex(colorToHex(droneColors[chosenColors[1]]))
+				context.droneElements.propellerBR.material.color.setHex(colorToHex(droneColors[chosenColors[1]]))
+				context.droneElements.propellerBL.material.color.setHex(colorToHex(droneColors[chosenColors[1]]))
+
+				addBitCoin();
+				addTank();
+				addHearts();
+			});
+
+			context.started = true;
+			controls.lock();
+			document.getElementById("joystickbutton").addEventListener("click", () => {
+				document.getElementById("commands").style.display = 'none';
+				setTimeout(() => {
+					controls.lock()
+				}, 1000);
+			}, false);
+		});
+
 		addWater().then(() => {
 			addCity().then(() => {
-				addDrone().then(() => {
-					addBitCoin();
-					addTank();
-					addHearts();
-				});
+				//
 			})
 		})
 
@@ -1100,18 +1128,8 @@ class MainScene extends Scene3D {
 	collisionDrone() {
 		function changeColor(context, times, color) {
 			if (times == 0) return;
+			context.drone.visible = color == 1 ? true : false
 
-			context.droneElements.propellerBL.material.transparent = true;
-			context.droneElements.propellerFL.material.transparent = true;
-			context.droneElements.propellerBR.material.transparent = true;
-			context.droneElements.propellerFR.material.transparent = true;
-			context.droneElements.propellerBL.material.opacity = color;
-			context.droneElements.propellerFL.material.opacity = color;
-			context.droneElements.propellerBR.material.opacity = color;
-			context.droneElements.propellerFR.material.opacity = color;
-
-			context.drone.children[0].material.transparent = true;
-			context.drone.children[0].material.opacity = color;
 			if (color == 1) {
 				setTimeout(function () { changeColor(context, times - 1, 0) }, 500);
 			} else {
@@ -1197,12 +1215,7 @@ class MainScene extends Scene3D {
 			project.projectConfig.maxSubSteps /= 2
 			project.projectConfig.fixedTimeStep /= 2
 		}
-		if (this.drone && this.drone.body && this.thirdPersonCamera) {
-			if (this.water) {
-
-				this.water.material.uniforms.time.value += 0.5 * delta;
-
-			}
+		if(this.city) {
 			if (!this.gameStarted) {
 				document.getElementById("menu").style.display = 'block';
 				document.getElementById("fuel").style.display = 'block';
@@ -1250,6 +1263,13 @@ class MainScene extends Scene3D {
 				this.gameStarted = true;
 				document.getElementById('startbutton').disabled = false;
 			}
+		}
+		if (this.drone && this.drone.body && this.thirdPersonCamera) {
+			if (this.water) {
+
+				this.water.material.uniforms.time.value += 0.5 * delta;
+
+			}
 
 			// fuel simulator
 			if (this.gameStart) {
@@ -1257,8 +1277,6 @@ class MainScene extends Scene3D {
 				this.fuel -= (5 + difficulty * difficulty * 3) * delta;
 				if (this.fuel <= 0) this.collisionDrone()
 			}
-
-
 
 			this.thirdPersonCamera.Update(delta, this.theta, this.phi);
 
@@ -1298,10 +1316,18 @@ class MainScene extends Scene3D {
 			this.p_speed_y.z = this.ang_speed.y * 0.25;
 			this.p_speed_y.w = -this.ang_speed.y * 0.25;
 
-			this.droneElements.propellerFR.rotation.y -= (p_speed + d_speed_y * 2 + this.p_speed_p.x + this.p_speed_r.x + this.p_speed_y.x) * delta;
-			this.droneElements.propellerFL.rotation.y -= (p_speed + d_speed_y * 2 + this.p_speed_p.y + this.p_speed_r.y + this.p_speed_y.y) * delta;
-			this.droneElements.propellerBR.rotation.y -= (p_speed + d_speed_y * 2 + this.p_speed_p.z + this.p_speed_r.z + this.p_speed_y.z) * delta;
-			this.droneElements.propellerBL.rotation.y -= (p_speed + d_speed_y * 2 + this.p_speed_p.w + this.p_speed_r.w + this.p_speed_y.w) * delta;
+			if(quadricopter) {
+				this.droneElements.propellerFR.rotation.z -= (p_speed + d_speed_y * 2 + this.p_speed_p.x + this.p_speed_r.x + this.p_speed_y.x) * delta;
+				this.droneElements.propellerFL.rotation.z += (p_speed + d_speed_y * 2 + this.p_speed_p.y + this.p_speed_r.y + this.p_speed_y.y) * delta;
+				this.droneElements.propellerBR.rotation.z += (p_speed + d_speed_y * 2 + this.p_speed_p.z + this.p_speed_r.z + this.p_speed_y.z) * delta;
+				this.droneElements.propellerBL.rotation.z -= (p_speed + d_speed_y * 2 + this.p_speed_p.w + this.p_speed_r.w + this.p_speed_y.w) * delta;
+			} else {
+				this.droneElements.propellerFR.rotation.y -= (p_speed + d_speed_y * 2 + this.p_speed_p.x + this.p_speed_r.x + this.p_speed_y.x) * delta;
+				this.droneElements.propellerFL.rotation.y -= (p_speed + d_speed_y * 2 + this.p_speed_p.y + this.p_speed_r.y + this.p_speed_y.y) * delta;
+				this.droneElements.propellerBR.rotation.y -= (p_speed + d_speed_y * 2 + this.p_speed_p.z + this.p_speed_r.z + this.p_speed_y.z) * delta;
+				this.droneElements.propellerBL.rotation.y -= (p_speed + d_speed_y * 2 + this.p_speed_p.w + this.p_speed_r.w + this.p_speed_y.w) * delta;
+			}
+			
 
 			this.tooFast = new Vector3(this.drone.body.velocity.x, this.drone.body.velocity.y, this.drone.body.velocity.z).length() > 9
 			this.drone.body.needUpdate = true;
