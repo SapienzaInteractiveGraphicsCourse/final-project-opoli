@@ -775,7 +775,21 @@ class MainScene extends Scene3D {
 				}
 			});
 
+			const spotLight = new THREE.SpotLight( 0xff0000 );
 
+			spotLight.angle = Math.PI / 4;
+			spotLight.penumbra = 0.1;
+			spotLight.decay = 2;
+			spotLight.distance = 50;
+
+			spotLight.castShadow = true;
+			spotLight.shadow.mapSize.width = 512;
+			spotLight.shadow.mapSize.height = 512;
+			spotLight.shadow.camera.near = 10;
+			spotLight.shadow.camera.far = 50;
+			spotLight.shadow.focus = 1;
+
+			this.drone.add( spotLight );
 		}
 		const addWater = async () => {
 
