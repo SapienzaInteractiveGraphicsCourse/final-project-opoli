@@ -121,7 +121,7 @@ var ease_func_speed = TWEEN.Easing.Quartic.Out;
 var ease_func_up = TWEEN.Easing.Linear.None;
 var throttle_control = false;
 
-var listener, sound, droneSound, helperSound, rainSound;
+var listener, sound, droneSound, helperSound, rainSound, rainMustPlay = false;
 var soundsLoaded = false;
 const sounds = {
 	background: { url: './sounds/music.mp3' },
@@ -174,7 +174,7 @@ function playSoundTrack() {
 		document.getElementById("musicbutton").src = './menu/soundoff.png';
 		sound.pause();
 		droneSound.pause();
-		rainSound.pause();
+		if(rainSound.isPlaying) rainSound.stop();
 	} else {
 		document.getElementById("musicbutton").src = './menu/soundin.png';
 		sound.isPlaying = false;
@@ -187,6 +187,7 @@ function playSoundTrack() {
 		droneSound.setLoop(true);
 		droneSound.setVolume(0.025);
 		droneSound.play();
+		playRainMusic();
 	}
 }
 
@@ -224,8 +225,8 @@ function playConsumableMusic() {
 
 function playRainMusic() {
 	if (sound.isPlaying) {
-		if(rainSound.isPlaying) {
-			rainSound.stop()
+		if(!rainMustPlay) {
+			if(rainSound.isPlaying) rainSound.stop()
 		} else {
 			rainSound.isPlaying = false;
 			rainSound.setBuffer(sounds.rain.sound);
@@ -1159,6 +1160,7 @@ class MainScene extends Scene3D {
 			this.rain.material.opacity = 0
 		}
 		this.isRaining = isRaining;
+		rainMustPlay = isRaining;
 		playRainMusic();
 
 		new Noty({
