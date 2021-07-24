@@ -10,11 +10,9 @@ const {
 	PointerDrag
 } = ENABLE3D
 import TWEEN, { Easing, Tween } from './libs/tween.esm.js';
-import { AxesHelper, BoxGeometry, Color, LineBasicMaterial, Mesh, MeshPhongMaterial, MultiplyOperation, Plane, PlaneGeometry, PointLight, TextureLoader, Vector3 } from './three.js-master/build/three.module.js';
+import { AxesHelper, BoxGeometry, Color, LineBasicMaterial, Mesh, MeshPhongMaterial, MultiplyOperation, PerspectiveCamera, Plane, PlaneGeometry, PointLight, TextureLoader, Vector3 } from './three.js-master/build/three.module.js';
 import { PointerLockControls } from './three.js-master/examples/jsm/controls/PointerLockControls.js';
 import { Water } from './three.js-master/examples/js/objects/Water.js';
-import { CSM } from './three.js-master/examples/jsm/csm/CSM.js'
-import { CSMHelper } from './three.js-master/examples/jsm/csm/CSMHelper.js'
 
 import { EffectComposer } from './three.js-master/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from './three.js-master/examples/jsm/postprocessing/RenderPass.js';
@@ -261,7 +259,9 @@ class MainScene extends Scene3D {
 
 		// camera
 		{
-			this.camera = new THREE.PerspectiveCamera(60, this.camera.aspect, 0.1, 1000);
+			this.camera.fov = 60
+			this.camera.near = 0.1
+			this.camera.far = 1000
 			this.camera.position.set(-109.12401580810547, 213.40965270996094, -266.63372802734375);
 			this.camera.lookAt(0, 0, 0)
 
@@ -356,27 +356,27 @@ class MainScene extends Scene3D {
 
 		// postprocessing
 
-		this.composer = new EffectComposer(this.renderer);
+		// this.composer = new EffectComposer(this.renderer);
 
-		const renderPass = new RenderPass(this.scene, this.camera);
-		this.composer.addPass(renderPass);
+		// const renderPass = new RenderPass(this.scene, this.camera);
+		// this.composer.addPass(renderPass);
 
-		this.outlinePass = new OutlinePass(new THREE.Vector2(window.innerWidth, window.innerHeight), this.scene, this.camera);
-		this.outlinePass.edgeStrength = 4.0;
-		this.outlinePass.edgeGlow = 1.0;
-		this.outlinePass.edgeThickness = 4.0;
-		this.outlinePass.pulsePeriod = 0;
-		this.outlinePass.visibleEdgeColor.set('#196e41');
-		this.outlinePass.hiddenEdgeColor.set('#196e41');
+		// this.outlinePass = new OutlinePass(new THREE.Vector2(window.innerWidth, window.innerHeight), this.scene, this.camera);
+		// this.outlinePass.edgeStrength = 4.0;
+		// this.outlinePass.edgeGlow = 1.0;
+		// this.outlinePass.edgeThickness = 4.0;
+		// this.outlinePass.pulsePeriod = 0;
+		// this.outlinePass.visibleEdgeColor.set('#196e41');
+		// this.outlinePass.hiddenEdgeColor.set('#196e41');
 		// this.composer.addPass(this.outlinePass);
 
-		let effectFXAA = new ShaderPass(FXAAShader);
-		effectFXAA.uniforms['resolution'].value.set(1 / window.innerWidth, 1 / window.innerHeight);
-		this.composer.addPass(effectFXAA);
+		// let effectFXAA = new ShaderPass(FXAAShader);
+		// effectFXAA.uniforms['resolution'].value.set(1 / window.innerWidth, 1 / window.innerHeight);
+		// this.composer.addPass(effectFXAA);
 	}
 
 	async preload() {
-		const city = this.load.preload('city', './models/scene.gltf')
+		const city = this.load.preload('city', './models/city/scene2.gltf')
 
 		const drone = this.load.preload('drone', './models/drone.glb')
 
@@ -601,8 +601,6 @@ class MainScene extends Scene3D {
 						});
 
 						child.material.color.setHex(0xffffff);
-					} else if (child.material.color && child.material.color.r === 0.5684522089150544) {
-						child.material.color.setRGB(0.752941, 0.752941, 0.752941)
 					}
 					child.castShadow = child.receiveShadow = true;
 					child.material.metalness = 0
