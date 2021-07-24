@@ -114,7 +114,7 @@ var ease_func_speed = TWEEN.Easing.Quartic.Out;
 var ease_func_up = TWEEN.Easing.Linear.None;
 
 var listener, sound, droneSound, helperSound, rainSound, rainMustPlay = false, droneFirstLift = false;
-var soundsLoaded = false;
+var soundsLoaded = 0;
 const sounds = {
 	background: { url: './sounds/music.mp3' },
 	drone: { url: './sounds/drone.m4a' },
@@ -150,12 +150,13 @@ function colorToHex(color) {
 function loadSounds() {
 	const soundsLoaderMngr = new THREE.LoadingManager();
 	soundsLoaderMngr.onLoad = () => {
-		soundsLoaded = true;
+		//
 	};
 	const audioLoader = new THREE.AudioLoader(soundsLoaderMngr);
 	for (const sound of Object.values(sounds)) {
 		audioLoader.load(sound.url, function (buffer) {
 			sound.sound = buffer;
+			soundsLoaded++;
 		});
 	}
 }
@@ -163,7 +164,7 @@ function loadSounds() {
 
 
 function playSoundTrack() {
-	if (!soundsLoaded) return;
+	if (soundsLoaded != 7) return;
 	if (sound.isPlaying) {
 		document.getElementById("musicbutton").src = './menu/soundoff.png';
 		sound.pause();
@@ -387,6 +388,8 @@ class MainScene extends Scene3D {
 		const tank = this.load.preload('tank', './models/tank/scene.gltf')
 
 		const heart = this.load.preload('heart', './models/heart/scene.gltf')
+
+		loadSounds()
 
 		await Promise.all([city, drone, bitcoin, tank, heart, drone2])
 	}
@@ -1099,7 +1102,7 @@ class MainScene extends Scene3D {
 			})
 		})
 
-		loadSounds()
+		
 	}
 
 	blink_color = 0x000000;
