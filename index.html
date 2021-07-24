@@ -10,6 +10,16 @@
 	</head>
 <script>
 	window.onload = () => {
+		var n = new Date().getHours();
+		
+		if(n < 12) {
+			advisedhour = "Day"
+		}
+		else if (n < 19) {
+			advisedhour = "Afternoon"
+		} 
+		document.getElementById("advisedhour").innerHTML = advisedhour
+
 		var elements = document.getElementsByClassName("selectable");
 
 		var myFunction = function() {
@@ -34,6 +44,13 @@
 					elements[i].classList.remove("selected3");
 				}
 				this.classList.add("selected3");
+			}
+			if(this.getAttribute("data-day")) {
+				document.getElementById("startbutton").setAttribute("data-day", this.getAttribute("data-day"))
+				for (var i = 0; i < elements.length; i++) {
+					elements[i].classList.remove("selected4");
+				}
+				this.classList.add("selected4");
 			}
 			
 			
@@ -71,12 +88,18 @@
 		<div  data-difficulty="hard" class="selectable selectable3" style="float: left; padding:2vh; margin: 25px; border: 1px solid red" >Hard</div>
 		<div style="clear: both"></div>
 
+		<h2>Choose DayTime<br><small>(currently your computer time is: <span id="advisedhour">Night</span>)</small> </h2>
+		<div data-day="day" class="selectable selectable4 selected4" style="float: left; padding: 2vh; margin: 25px;  border: 1px solid skyblue" >Day</div>
+		<div  data-day="afternoon" class="selectable selectable4" style="float: left; padding: 2vh; margin: 25px; border: 1px solid orange" >Afternoon</div>
+		<div  data-day="night" class="selectable selectable4" style="float: left; padding:2vh; margin: 25px; border: 1px solid black" >Night</div>
+		<div style="clear: both"></div>
+
 		<br>
-		<button data-drone-color="black" data-propeller-color="black" data-difficulty="medium" style="width: 6vw; height: 5vh; font-size: 2vw" id="startbutton" disabled>Start</button>
+		<button data-day="day" data-drone-color="black" data-propeller-color="black" data-difficulty="medium" style="width: 6vw; height: 5vh; font-size: 2vw" id="startbutton" disabled>Start</button>
 		</div>
 	</div>
 	<div id="menu">
-		<div><div id="fps"></div><img src="./menu/soundoff.png" id = "musicbutton"><img src="./menu/rain.png" id = "rainbutton"><img src="./menu/joystick.png" id = "joystickbutton"></div>
+		<div><div id="fps"></div><img src="./menu/soundoff.png" id = "musicbutton"><img src="./menu/sun.png" id = "rainbutton"><img src="./menu/joystick.png" id = "joystickbutton"></div>
 	</div>
 	<div id="commands" style="width: 100vw; height: 100vh; position: relative; background-color: transparent">
 		<div style="margin: 0;

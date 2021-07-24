@@ -14,6 +14,9 @@ body {
     bottom: 0;
     z-index: 3;
     display: none;
+    background-color: grey;
+    border-right: 1px solid #000;
+    border-top: 1px solid #000;
 }
 canvas {
     display: block;    
@@ -83,5 +86,12 @@ canvas {
 }
 
 .selected3 {
+    background-color: yellowgreen
+}
+.selectable4:hover {
+    background-color: yellowgreen
+}
+
+.selected4 {
     background-color: yellowgreen
 }

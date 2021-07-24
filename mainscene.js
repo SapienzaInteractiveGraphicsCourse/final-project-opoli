@@ -121,7 +121,7 @@ var ease_func_speed = TWEEN.Easing.Quartic.Out;
 var ease_func_up = TWEEN.Easing.Linear.None;
 var throttle_control = false;
 
-var listener, sound, droneSound, helperSound;
+var listener, sound, droneSound, helperSound, rainSound;
 var soundsLoaded = false;
 const sounds = {
 	background: { url: './sounds/music.mp3' },
@@ -129,13 +129,14 @@ const sounds = {
 	death: { url: './sounds/death.wav' },
 	win: { url: './sounds/win.wav' },
 	consumable: { url: './sounds/consumable.wav' },
+	rain: { url: './sounds/rain.wav' },
 	hit: { url: './sounds/hit.wav' },
 }
 
 const droneColors = ["red", "black", "blue", "green", "white"];
 var chosenColors = [3, 4]; //1st drone, 2nd propellers
 var difficulty = 3; //easy 0, medium 1, hard 2
-var dayTime = 2; // 0 day, 1 twilight, 2 night
+var dayTime = 0; // 0 day, 1 twilight, 2 night
 const targetCoins = [3, 5, 10, 0];
 
 function colorToHex(color) {
@@ -173,6 +174,7 @@ function playSoundTrack() {
 		document.getElementById("musicbutton").src = './menu/soundoff.png';
 		sound.pause();
 		droneSound.pause();
+		rainSound.pause();
 	} else {
 		document.getElementById("musicbutton").src = './menu/soundin.png';
 		sound.isPlaying = false;
@@ -218,6 +220,20 @@ function playConsumableMusic() {
 		helperSound.setVolume(0.3);
 		helperSound.play();
 	}
+}
+
+function playRainMusic() {
+	if (sound.isPlaying) {
+		if(rainSound.isPlaying) {
+			rainSound.stop()
+		} else {
+			rainSound.isPlaying = false;
+			rainSound.setBuffer(sounds.rain.sound);
+			rainSound.setLoop(false);
+			rainSound.setVolume(0.45);
+			rainSound.play();
+		}	
+	} 
 }
 
 function playHitMusic() {
@@ -308,6 +324,7 @@ class MainScene extends Scene3D {
 			sound = new THREE.Audio(listener);
 			droneSound = new THREE.Audio(listener);
 			helperSound = new THREE.Audio(listener);
+			rainSound = new THREE.Audio(listener);
 		}
 
 		//rain
@@ -467,8 +484,6 @@ class MainScene extends Scene3D {
 
 		sky.material.uniforms.bottomColor.value.setRGB(...this.dayTimeColors[dayTime].bottomColor)
 		sky.material.uniforms.topColor.value.setRGB(...this.dayTimeColors[dayTime].topColor)
-		console.log(sky.material.uniforms)
-		// sky.material.uniforms.uniformsNeedUpdate = true;
 
 		this.physics.add.existing(sky, {
 			shape: 'concave',
@@ -734,6 +749,8 @@ class MainScene extends Scene3D {
 			// event listeners
 			document.getElementById("startbutton").addEventListener("click", () => {
 				this.gameStart = true;
+				this.shiftRain(false);
+				playSoundTrack();
 				document.getElementById("gameloader").style.display = 'none';
 				chosenColors[0] = droneColors.indexOf(document.getElementById("startbutton").getAttribute("data-drone-color"))
 				chosenColors[1] = droneColors.indexOf(document.getElementById("startbutton").getAttribute("data-propeller-color"))
@@ -745,6 +762,22 @@ class MainScene extends Scene3D {
 				} else {
 					difficulty = 2;
 				}
+				let n_day = document.getElementById("startbutton").getAttribute("data-day")
+				if (n_day == "day") {
+					dayTime = 0;
+				} else if (n_day == "afternoon") {
+					dayTime = 1;
+				} else {
+					dayTime = 2;
+				}
+
+				this.lightsController.directionalLight.color.setRGB(...this.lightColors[dayTime].dir)
+				this.lightsController.ambientLight.color.setRGB(...this.lightColors[dayTime].amb)
+				this.lightsController.hemisphereLight.color.setRGB(...this.lightColors[dayTime].hem)
+				this.sky.material.uniforms.bottomColor.value.setRGB(...this.dayTimeColors[dayTime].bottomColor)
+				this.sky.material.uniforms.topColor.value.setRGB(...this.dayTimeColors[dayTime].topColor)
+				this.sky.material.uniforms.uniformsNeedUpdate = true;
+
 				context.drone.children[0].material.color.setHex(colorToHex(droneColors[chosenColors[0]]))
 				context.droneElements.propellerFR.material.color.setHex(colorToHex(droneColors[chosenColors[1]]))
 				context.started = true;
@@ -760,7 +793,7 @@ class MainScene extends Scene3D {
 				let key = event.key.toLowerCase();
 				if (context.freefall || !context.gameStart) return;
 				if (key === "h") console.log(context.drone.position)
-				if (key === "g") {
+				/*if (key === "g") {
 					context.drone.body.setCollisionFlags(2);
 					context.drone.position.setY(100);
 					context.drone.body.needUpdate = true;
@@ -778,7 +811,7 @@ class MainScene extends Scene3D {
 						context.drone.body.setCollisionFlags(0);
 						context.drone.body.setVelocity(0, 0, 0);
 					})
-				}
+				}*/
 				if (key === 'u') {
 					playSoundTrack();
 				}
@@ -1126,6 +1159,7 @@ class MainScene extends Scene3D {
 			this.rain.material.opacity = 0
 		}
 		this.isRaining = isRaining;
+		playRainMusic();
 
 		new Noty({
 			type: 'info',
@@ -1167,7 +1201,6 @@ class MainScene extends Scene3D {
 
 			}
 			if (!this.gameStarted) {
-				this.shiftRain(false);
 				document.getElementById("menu").style.display = 'block';
 				document.getElementById("fuel").style.display = 'block';
 
