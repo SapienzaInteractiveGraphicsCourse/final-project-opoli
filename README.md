@@ -25,7 +25,7 @@ The game has been tested in Google Chrome and Microsoft Edge.
 
 ![alt text](https://github.com/SapienzaInteractiveGraphicsCourse/final-project-opoli/blob/main/images/coin.jpg)
 
-* Hearts. Collect an heart to restore one life.
+* Hearts. Collect a heart to restore one life.
 
 ![alt text](https://github.com/SapienzaInteractiveGraphicsCourse/final-project-opoli/blob/main/images/CUORE.jpg)
 
