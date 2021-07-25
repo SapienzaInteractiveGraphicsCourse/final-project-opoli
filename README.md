@@ -15,9 +15,10 @@ The game has been tested in Google Chrome and Microsoft Edge.
 ### Commands
 
 * W, A, S, D to move the drone respectively forward, left, backward and right.
-* Q, E to rotate the drone and the camera left and right.
+* Q, E to rotate the drone left and right.
 * < and space to descend and ascend (it takes some time to start the ascension and to invert the vertical movement).
 * U activate/disable sounds.
+* Mouse camera movement
 
 ### Items
 
