@@ -14,7 +14,7 @@ The game has been tested in Google Chrome and Microsoft Edge
 
 ### Commands
 
-*W, A, S, D to move the drone respectively forward, left, backward and right
+* W, A, S, D to move the drone respectively forward, left, backward and right
 
 ## Game link
 
