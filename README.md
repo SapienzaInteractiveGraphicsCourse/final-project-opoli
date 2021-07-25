@@ -19,6 +19,7 @@ The game has been tested in Google Chrome and Microsoft Edge.
 * < and space bar to descend and ascend (it takes some time to start the ascension and to invert the vertical movement).
 * U activate/disable sounds.
 * Mouse camera movement
+
 **WARNING**: If you keep holding the space bar or the < key, the acceleration will increment still a threshold value. The challenge is to balance the use of < and the use of the space bar. Do some practice to have a perfect control of the drone :)
 
 ### Items
