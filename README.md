@@ -2,7 +2,7 @@
 
 This is the repository of the final project of the Interactive Graphics course.
 
-The proposed work is a 3D game that consists in the collection of a certain number of coins without losing more than three lives.
+The proposed work is a 3D game that consists in the collection of a certain number of coins without being left with zero hearts.
 
 Please, refer to the Game Link section below to play and interact with the game.
 
@@ -22,7 +22,7 @@ The game has been tested in Google Chrome and Microsoft Edge.
 
 ### Items
 
-* Coins. The player has to collect these coins to win the game.
+* Coins. The player has to collect these coins to win the game (3 in easy mode, 5 in medium mode and 10 in hard mode).
 
 ![alt text](https://github.com/SapienzaInteractiveGraphicsCourse/final-project-opoli/blob/main/images/coin.jpg)
 
