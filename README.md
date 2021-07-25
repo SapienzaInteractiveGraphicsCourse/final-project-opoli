@@ -6,6 +6,16 @@ The proposed work is a 3D game consists of collecting a certain number of coins 
 
 Please, refer to the Game Link section below to play and interact with the game.
 
+## Compatibility
+
+The game has been tested in Google Chrome and Microsoft Edge
+
+## How to Play
+
+### Commands
+
+*W, A, S, D to move the drone respectively forward, left, backward and right
+
 ## Game link
 
 [Click here to play the game](https://sapienzainteractivegraphicscourse.github.io/final-project-opoli/).
