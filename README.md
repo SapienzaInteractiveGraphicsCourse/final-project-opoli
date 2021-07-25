@@ -2,7 +2,7 @@
 
 This is the repository of the final project of the Interactive Graphics course.
 
-The proposed work is a 3D game consists of collecting a certain number of coins without losing more than three lives.
+The proposed work is a 3D game that consists in the collection of certain number of coins without losing more than three lives.
 
 Please, refer to the Game Link section below to play and interact with the game.
 
